@@ -64,7 +64,7 @@ class _PlannerAppState extends State<PlannerApp> {
                 _adminTheme.isDark && role != null && role != Role.participant;
             return MaterialApp(
               scaffoldMessengerKey: _messenger,
-              title: 'BBW Visual Planner',
+              title: 'OnTime',
               debugShowCheckedModeBanner: false,
               theme: buildPlannerTheme(),
               darkTheme: buildPlannerTheme(dark: true),

@@ -124,7 +124,7 @@ class _ProductMark extends StatelessWidget {
     final palette = context.palette;
     return Semantics(
       header: true,
-      label: 'BBW Visual Planner, Caritas-Don Bosco Würzburg',
+      label: 'OnTime, Caritas-Don Bosco Würzburg',
       excludeSemantics: true,
       child: Column(
         children: [
@@ -143,7 +143,7 @@ class _ProductMark extends StatelessWidget {
           ),
           const SizedBox(height: AppSpace.md),
           Text(
-            'BBW Visual Planner',
+            'OnTime',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: AppSpace.xs),

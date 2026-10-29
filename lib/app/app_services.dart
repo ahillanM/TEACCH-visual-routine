@@ -13,6 +13,7 @@ import '../core/logic/change_planner.dart';
 import '../core/models/schedule_snapshot.dart';
 import '../core/models/support_request.dart';
 import '../core/state/group_store.dart';
+import '../core/state/in_memory_photos.dart';
 import '../core/state/library_store.dart';
 import '../core/state/participant_directory.dart';
 import '../core/state/progress_store.dart';
@@ -54,7 +55,8 @@ class AppServices {
   /// Dictation for "Build with AI" (device speech recognition).
   final SpeechInput speech;
 
-  /// Custom activity photos (Supabase Storage); null in the offline demo.
+  /// Custom activity photos: Supabase Storage, or in-memory in the offline
+  /// demo. Null hides the photo controls.
   final ActivityPhotos? photos;
 
   AppServices({
@@ -144,6 +146,7 @@ class AppServices {
       aiDrafts: const MockEventDraftGenerator(),
       groups: GroupStore(mockGroups),
       speech: speech,
+      photos: InMemoryActivityPhotos(schedule),
     );
   }
 

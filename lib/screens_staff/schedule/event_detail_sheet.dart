@@ -8,6 +8,7 @@ import '../../widgets/common.dart';
 import '../changes/change_management_page.dart';
 import '../common/staff_widgets.dart';
 import '../editor/activity_editor_page.dart';
+import '../photos/activity_photo_section.dart';
 import '../preview/participant_preview_dialog.dart';
 
 /// Opens the activity editor for a new or existing event.
@@ -103,6 +104,11 @@ class _EventDetailSheet extends StatelessWidget {
                     icon: Icons.groups_outlined,
                     text: names.isEmpty ? 'No participants assigned' : names),
                 const SizedBox(height: AppSpace.xl),
+                ActivityPhotoSection(
+                  event: event,
+                  isPublished: isPublished,
+                  isDraft: isDraft,
+                ),
                 Wrap(
                   spacing: AppSpace.sm,
                   runSpacing: AppSpace.sm,

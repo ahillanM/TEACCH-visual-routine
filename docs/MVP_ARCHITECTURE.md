@@ -1,4 +1,4 @@
-# BBW Visual Planner – MVP architecture
+# OnTime – MVP architecture
 
 > "Complexity stays with the system and staff. Clarity reaches the participant."
 
@@ -158,6 +158,22 @@ Sidebar sections: **Today · Participants · Schedule · Routines · Library · 
   preview, then **Publish change**.
 * **Routines**: templates you can create, edit, duplicate and assign. Assigning creates *drafts*.
 * **Library**: activities, places, people and pictograms (adding requires the admin role).
+* **Activity photos**: in the event details, a **Photo** section lists the assigned
+  participants, each with *Add / Change Photo*. The flow (`ActivityPhotoDialog`) is
+  *Take Photo* or *Choose from Gallery* → preview → *Use This Photo* (confirm) →
+  progress → saved. *Use Pictogram Instead* removes the photo after a confirmation.
+  Errors keep the preview and leave the activity unchanged, and the staff member can
+  retry. The pictogram itself is still chosen in the activity editor. Only published
+  activities can get a photo. Cards show the photo, else the pictogram, else the symbol
+  icon, else a default icon (`ActivityVisual`).
+  * Real backend: `SupabaseSync` implements `ActivityPhotos` on top of
+    `TaskImageService` (private bucket `task-images`, `activities.image_path`, short-lived
+    signed URLs that are never stored). The contract is in `supabase/README.md`, "Task photos".
+  * Offline demo: `InMemoryActivityPhotos` (same image preparation, in memory). One
+    photo is shared by everyone assigned to the event.
+  * Android: `image_picker` uses the system camera and Photo Picker, so no
+    permission is declared. It has not been tested on a device or emulator. iOS has
+    camera and photo library usage strings.
 
 ### Cancellation rules
 

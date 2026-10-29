@@ -72,7 +72,7 @@ class _AdminShellState extends State<AdminShell> {
             Icon(Icons.view_day_rounded, color: palette.brand),
             const SizedBox(width: AppSpace.sm),
             const Flexible(
-              child: Text('BBW Visual Planner · Staff',
+              child: Text('OnTime · Staff',
                   overflow: TextOverflow.ellipsis),
             ),
           ],

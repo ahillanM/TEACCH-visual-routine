@@ -249,7 +249,20 @@ class ScheduleStore extends ChangeNotifier {
   static bool _sameVisual(VisualRef a, VisualRef b) =>
       a.symbol == b.symbol &&
       a.pictogramUrl == b.pictogramUrl &&
-      a.photoUrl == b.photoUrl;
+      a.photoUrl == b.photoUrl &&
+      identical(a.photoBytes, b.photoBytes);
+
+  /// Replaces only the visual of a published event (e.g. a new photo).
+  /// Not a schedule change: participants get no notice and nothing moves.
+  void setPublishedVisual(String eventId, VisualRef visual) {
+    final before = published[eventId];
+    if (before == null) return;
+    _history.add(published.applying(
+      [before.copyWith(visual: visual)],
+      version: version + 1,
+    ));
+    notifyListeners();
+  }
 
   /// Publishes all current drafts on [day] (or every draft if null).
   ChangeEvent? publishDrafts({required String publishedBy, DateTime? day}) {

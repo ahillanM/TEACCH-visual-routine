@@ -6,9 +6,9 @@ import 'symbol_icons.dart';
 
 /// The large visual at the top of a card: a photo, a pictogram, or both.
 ///
-/// Approved institution photos are not available in the prototype, so the
-/// "photo" layer falls back to a calm illustrated tile (tinted background +
-/// large symbol). When a real `photoUrl` is set it is shown instead.
+/// Order of preference: custom photo (`photoUrl` / `photoBytes`), then the
+/// pictogram, then the symbol icon, then a default icon. Without a photo the
+/// "photo" layer is a calm illustrated tile (tinted background + symbol).
 class ActivityVisual extends StatelessWidget {
   final VisualRef visual;
   final Color accent;
@@ -84,6 +84,15 @@ class ActivityVisual extends StatelessWidget {
       alignment: showSymbol ? const Alignment(-0.6, 0) : Alignment.center,
       child: _symbolIcon(context, height * 0.45),
     );
+    final bytes = visual.photoBytes;
+    if (bytes != null) {
+      return Image.memory(
+        bytes,
+        fit: BoxFit.cover,
+        gaplessPlayback: true,
+        errorBuilder: (_, _, _) => placeholder,
+      );
+    }
     if (url == null) return placeholder;
     return Image.network(
       url,
