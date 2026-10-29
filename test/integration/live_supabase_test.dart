@@ -29,6 +29,7 @@ import 'package:bbw_visual_routine/services/app_config.dart';
 import 'package:bbw_visual_routine/services/backend_event_draft_generator.dart';
 import 'package:bbw_visual_routine/services/supabase_auth_service.dart';
 import 'package:bbw_visual_routine/services/supabase_sync.dart';
+import 'package:bbw_visual_routine/services/task_image_service.dart';
 
 const _lukasId = 'b0000000-0000-0000-0000-000000000001';
 const _jonasId = 'b0000000-0000-0000-0000-000000000003';
@@ -66,6 +67,7 @@ class _Session {
           activities: mockLibraryActivities,
           places: mockPlaces,
           contacts: mockContacts),
+      images: TaskImageService(db),
     );
     store = ScheduleStore(
       repository: sync,

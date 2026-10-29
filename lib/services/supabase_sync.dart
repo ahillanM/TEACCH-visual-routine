@@ -18,6 +18,7 @@ import '../core/state/schedule_repository.dart';
 import '../core/state/schedule_store.dart';
 import '../core/state/support_request_store.dart';
 import '../core/time/time_format.dart';
+import 'task_image_service.dart';
 
 /// Bridges the planner's in-memory stores and the Supabase backend.
 ///
@@ -34,12 +35,13 @@ import '../core/time/time_format.dart';
 ///   the user may see triggers a reload.
 ///
 /// Authorisation is enforced by Postgres; nothing here is trusted.
-class SupabaseSync implements ScheduleRepository {
+class SupabaseSync implements ScheduleRepository, ActivityPhotos {
   final SupabaseClient db;
   final ParticipantDirectory participants;
   final SupabaseSupportStore support;
   final SupabaseProgressStore progress;
   final LibraryStore library;
+  final TaskImageService images;
 
   /// Last error to show to the user (null = none). Cleared by the UI.
   final ValueNotifier<String?> errors = ValueNotifier(null);
@@ -63,6 +65,7 @@ class SupabaseSync implements ScheduleRepository {
     required this.support,
     required this.progress,
     required this.library,
+    required this.images,
   });
 
   void attach(ScheduleStore store) => _store = store;
@@ -99,6 +102,8 @@ class SupabaseSync implements ScheduleRepository {
     support.user = null;
     _serverGroups.clear();
     _activityIds.clear();
+    _imagePaths.clear();
+    images.clearCache();
     _store.replaceAll(const []);
     participants.replaceAll(const []);
     support.replaceAll(const []);
@@ -159,6 +164,70 @@ class SupabaseSync implements ScheduleRepository {
 
   final Map<String, String> _activityIds = {};
 
+  /// `activities.image_path` by "participantId/eventId" (published only).
+  final Map<String, String> _imagePaths = {};
+
+  // ---------------------------------------------------------------- photos
+
+  @override
+  bool hasPhoto(String eventId, String participantId) =>
+      _imagePaths.containsKey('$participantId/$eventId');
+
+  @override
+  Future<void> setActivityPhoto({
+    required String eventId,
+    required String participantId,
+    required Uint8List original,
+  }) async {
+    final key = '$participantId/$eventId';
+    final activityId = _activityIds[key];
+    if (activityId == null) {
+      throw const TaskImageException(
+          'Publish the activity first, then add a photo.');
+    }
+    final old = _imagePaths[key];
+    final path =
+        await images.upload(participantId: participantId, original: original);
+    try {
+      // RLS + column grant: only assigned staff; the DB trigger checks that
+      // the photo is in this participant's folder and exists.
+      await db
+          .from('activities')
+          .update({'image_path': path})
+          .eq('id', activityId)
+          .select('id')
+          .single();
+    } catch (_) {
+      await images.deleteIfUnused(path);
+      throw const TaskImageException('The photo could not be saved.');
+    }
+    if (old != null && old != path) await images.deleteIfUnused(old);
+    await refresh();
+  }
+
+  @override
+  Future<void> removeActivityPhoto({
+    required String eventId,
+    required String participantId,
+  }) async {
+    final key = '$participantId/$eventId';
+    final activityId = _activityIds[key];
+    final old = _imagePaths[key];
+    if (activityId == null || old == null) return;
+    try {
+      await db
+          .from('activities')
+          .update({'image_path': null})
+          .eq('id', activityId)
+          .select('id')
+          .single();
+    } catch (_) {
+      throw const TaskImageException('The photo could not be removed.');
+    }
+    await images.deleteIfUnused(old);
+    await refresh();
+  }
+
   bool _inWindow(DateTime day) {
     final today = TimeFormat.dateOnly(DateTime.now());
     final d = TimeFormat.dateOnly(day);
@@ -176,7 +245,7 @@ class SupabaseSync implements ScheduleRepository {
           .select(
             'id, participant_id, schedule_date, status, '
             'activities(id, title, description, start_time, end_time, status, '
-            'icon_key, category, pictogram_url, location, staff_name, meta)',
+            'icon_key, category, pictogram_url, location, staff_name, meta, image_path)',
           )
           .gte(
             'schedule_date',
@@ -191,12 +260,20 @@ class SupabaseSync implements ScheduleRepository {
       return;
     }
 
+    // Photos: one signed-URL request per reload (cached in [images]).
+    final photoUrls = await images.signedUrls([
+      for (final row in rows)
+        for (final a in (row['activities'] as List))
+          if ((a as Map)['image_path'] is String) a['image_path'] as String,
+    ]);
+
     final known = participants.byId.keys.toSet();
     final published = <String, ScheduledEvent>{};
     final drafts = <String, ScheduledEvent>{};
     final done = <(String, String)>[];
     _serverGroups.clear();
     _activityIds.clear();
+    _imagePaths.clear();
 
     for (final row in rows) {
       final pid = row['participant_id'] as String;
@@ -210,12 +287,15 @@ class SupabaseSync implements ScheduleRepository {
 
       final acts = (row['activities'] as List).cast<Map<String, dynamic>>();
       for (final a in acts) {
-        final event = _fromRow(a, day, pid);
+        final event = _fromRow(a, day, pid, photoUrls);
         if (event == null) continue;
         final id = _merge(target, event, pid);
         groupEvents.add(target[id]!);
         if (status == 'published') {
           _activityIds['$pid/$id'] = a['id'] as String;
+          if (a['image_path'] is String) {
+            _imagePaths['$pid/$id'] = a['image_path'] as String;
+          }
           if (a['status'] == 'completed') done.add((id, pid));
         }
       }
@@ -256,7 +336,12 @@ class SupabaseSync implements ScheduleRepository {
     return id;
   }
 
-  ScheduledEvent? _fromRow(Map<String, dynamic> a, DateTime day, String pid) {
+  ScheduledEvent? _fromRow(
+    Map<String, dynamic> a,
+    DateTime day,
+    String pid,
+    Map<String, String> photoUrls,
+  ) {
     final startStr = a['start_time'] as String?;
     if (startStr == null) return null; // the timeline needs a start time
     final meta = (a['meta'] as Map?)?.cast<String, dynamic>() ?? const {};
@@ -279,7 +364,9 @@ class SupabaseSync implements ScheduleRepository {
       visual: VisualRef(
         symbol: (a['icon_key'] as String?) ?? 'event',
         pictogramUrl: a['pictogram_url'] as String?,
-        photoUrl: meta['photoUrl'] as String?,
+        // Custom photo (temporary signed URL); ActivityVisual falls back to
+        // the pictogram/icon when it is missing or fails to load.
+        photoUrl: photoUrls[a['image_path']],
       ),
       placeId:
           (meta['placeId'] as String?) ??
@@ -395,7 +482,6 @@ class SupabaseSync implements ScheduleRepository {
         if (e.replacesEventId != null) 'replacesEventId': e.replacesEventId,
         if (e.reminderMinutesBefore != null)
           'reminderMinutesBefore': e.reminderMinutesBefore,
-        if (e.visual.photoUrl != null) 'photoUrl': e.visual.photoUrl,
         if (e.whatToBring.isNotEmpty) 'whatToBring': e.whatToBring,
       },
     };
