@@ -4,6 +4,7 @@ import '../logic/change_factory.dart';
 import '../models/change_event.dart';
 import '../models/schedule_snapshot.dart';
 import '../models/scheduled_event.dart';
+import '../models/visual_ref.dart';
 import '../time/time_format.dart';
 import 'schedule_repository.dart';
 
@@ -228,9 +229,27 @@ class ScheduleStore extends ChangeNotifier {
         if (e.isActive && window(e) && !byId.containsKey(e.id))
           e.copyWith(status: EventStatus.cancelled),
     ];
+    // Picture-only updates (new photo, refreshed photo link) are applied
+    // silently: they are not a schedule change for the participant.
+    final visualOnly = [
+      for (final e in byId.values)
+        if (published[e.id] case final before?)
+          if (ChangeFactory.diff(before, e).isEmpty &&
+              !_sameVisual(before.visual, e.visual))
+            before.copyWith(visual: e.visual),
+    ];
+    if (visualOnly.isNotEmpty) {
+      _history.add(published.applying(visualOnly, version: version + 1));
+      if (upserts.isEmpty) notifyListeners();
+    }
     if (upserts.isEmpty) return null;
     return publish(upserts: upserts, publishedBy: publishedBy, persist: false);
   }
+
+  static bool _sameVisual(VisualRef a, VisualRef b) =>
+      a.symbol == b.symbol &&
+      a.pictogramUrl == b.pictogramUrl &&
+      a.photoUrl == b.photoUrl;
 
   /// Publishes all current drafts on [day] (or every draft if null).
   ChangeEvent? publishDrafts({required String publishedBy, DateTime? day}) {

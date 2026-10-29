@@ -85,6 +85,33 @@ Errors: RPC/DB failures throw `PostgrestException` (`code` 42501 = not allowed, 
 
 **Mapping to `ScheduleItem`:** `timeRange` = `"${start_time.substring(0,5)} - ${end_time.substring(0,5)}"`, only start → just the start, none → show "no time set". `isCompleted = status == 'completed'`, `category`, `location`→`locationName`, `staff_name`→`staffName`, `pictogram_url` or ARASAAC lookup of `icon_key`; `activity_steps` → `SubStep` (`duration_min` can be null, `is_completed`). `isModifiedAlert` has no column yet: derive it from `schedule_changes` (staff only) or add later.
 
+## Task photos (custom activity images)
+Private bucket `task-images` (max 2 MB; JPEG/PNG/WebP). `activities.image_path` stores the **object path only**: `participants/{participant_id}/{random_uuid}.jpg`. Never store bytes, public URLs or signed URLs, and never put names in paths. `icon_key`/`pictogram_url` are unchanged and remain the fallback.
+
+| Who | Upload | Read | Delete |
+|---|---|---|---|
+| Assigned staff | ✓ (their participants' folders) | ✓ | ✓ if no activity uses it |
+| Participant | ✗ | own folder only | ✗ |
+| Other staff / participants / anon | ✗ | ✗ | ✗ |
+
+Objects are never overwritten: there is no UPDATE policy and `upsert` is refused. To replace a photo, upload a new one, repoint the activity, then delete the old one. The DB trigger rejects an `image_path` that is in another participant's folder (`image_wrong_participant`) or that doesn't exist (`image_not_found`).
+
+`save_schedule` items accept `"imagePath"`. If an item has **no** `imagePath` key, its current photo is kept (planner sync and AI drafts never drop it); `"imagePath": null` removes it. Staff can also set it directly: `update activities set image_path = …` (RLS: assigned staff only).
+
+**Flutter.** `services.photos` (an `ActivityPhotos`, null in mock mode) is the whole contract. It reuses the signed-in Supabase session and needs no extra keys:
+```dart
+final photos = AppScope.of(context).photos;            // null → hide the photo button
+await photos?.setActivityPhoto(eventId: e.id, participantId: pid, original: bytes); // upload + attach + delete old
+await photos?.removeActivityPhoto(eventId: e.id, participantId: pid);
+photos?.hasPhoto(e.id, pid);
+```
+- `original` is the raw file from the picker (e.g. `image_picker` → `readAsBytes()`). The service decodes it, applies orientation, scales to max 1280 px, re-encodes as JPEG q80 and drops **all EXIF/GPS metadata** in a background isolate before upload. Typical result: 150–400 KB.
+- Only **published** activities can get a photo. A shared event gets one photo per participant.
+- Rendering needs no UI change. The sync turns `image_path` into a signed URL (valid 2 h, cached, refreshed automatically on reload) in `VisualRef.photoUrl`, and `ActivityVisual` shows it, falling back to the pictogram/icon on error. It respects the participant's "symbols only" preference as before.
+- Low-level use: `TaskImageService(db)`: `upload`, `signedUrl(s)`, `deleteIfUnused`. Signed URLs are bearer links, so never log or persist them.
+
+Live tests: `flutter test test/integration/live_task_photos_test.dart`.
+
 ## Security design (short)
 - Roles exist only in `public.profiles`, written by admins/service role; clients have no insert/update on it. A signup with `role: staff` metadata gets no profile → sees nothing (tested).
 - Client write grants are column-level: nobody can write `status`, `completed_at`, audit tables, attendance or events directly. Those change only via the RPCs above, which check the caller.
