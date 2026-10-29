@@ -108,7 +108,5 @@ docs/MVP_ARCHITECTURE.md architecture and how to extend it
 - **This is a hackathon prototype with fictional data.** It is not GDPR-certified. Before any real use: run a privacy review, rotate the demo passwords, disable public sign-ups, and serve the AI backend over HTTPS.
 
 ## Known limitations
-
-- Not yet tested on a physical Android device (dictation, permissions).
 - Library, routine templates, groups and participant display preferences are stored on the device only.
 - There is no staff screen yet for "unavailable periods" (they are set in the database).
