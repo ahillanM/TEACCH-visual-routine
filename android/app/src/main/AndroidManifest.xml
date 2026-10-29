@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- ADD THIS LINE SO AI & PICTOGRAMS WORK IN THE APK -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Voice input in "Build with AI" (Android speech recognition; asked at first use). -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
 
     <application
         android:label="bbw_visual_routine"
@@ -40,6 +42,10 @@
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
+        <!-- Lets the app find the device's speech recognition service (Android 11+). -->
+        <intent>
+            <action android:name="android.speech.RecognitionService"/>
+        </intent>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
