@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../core/models/app_user.dart';
 import '../theme.dart';
+import 'admin_theme.dart';
 import 'app_scope.dart';
 import 'app_services.dart';
 import 'role_aware_redirect.dart';
@@ -22,6 +24,7 @@ class PlannerApp extends StatefulWidget {
 class _PlannerAppState extends State<PlannerApp> {
   late final AppServices _services = widget.services ?? AppServices.demo();
   final _messenger = GlobalKey<ScaffoldMessengerState>();
+  final _adminTheme = AdminThemeController();
 
   @override
   void initState() {
@@ -40,6 +43,7 @@ class _PlannerAppState extends State<PlannerApp> {
   @override
   void dispose() {
     _services.errors.removeListener(_showError);
+    _adminTheme.dispose();
     if (widget.services == null) _services.dispose();
     super.dispose();
   }
@@ -48,12 +52,27 @@ class _PlannerAppState extends State<PlannerApp> {
   Widget build(BuildContext context) {
     return AppScope(
       services: _services,
-      child: MaterialApp(
-        scaffoldMessengerKey: _messenger,
-        title: 'BBW Visual Planner',
-        debugShowCheckedModeBanner: false,
-        theme: buildPlannerTheme(),
-        home: const RoleAwareRedirect(),
+      child: AdminThemeScope(
+        controller: _adminTheme,
+        child: ListenableBuilder(
+          listenable: Listenable.merge([_adminTheme, _services.auth]),
+          builder: (context, _) {
+            // Dark mode only applies to signed-in staff; login and the
+            // participant UI stay light.
+            final role = _services.auth.user?.role;
+            final dark =
+                _adminTheme.isDark && role != null && role != Role.participant;
+            return MaterialApp(
+              scaffoldMessengerKey: _messenger,
+              title: 'OnTime',
+              debugShowCheckedModeBanner: false,
+              theme: buildPlannerTheme(),
+              darkTheme: buildPlannerTheme(dark: true),
+              themeMode: dark ? ThemeMode.dark : ThemeMode.light,
+              home: const RoleAwareRedirect(),
+            );
+          },
+        ),
       ),
     );
   }

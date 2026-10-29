@@ -1,4 +1,4 @@
-# BBW Visual Planner – MVP architecture
+# OnTime – MVP architecture
 
 > "Complexity stays with the system and staff. Clarity reaches the participant."
 
@@ -125,6 +125,14 @@ participant acknowledges ──► sees vN+1, feed re-centres on NOW
 * **Plan changed**: a calm banner opens `ChangeNoticePage`. It shows what was
   cancelled, what happens instead, and that the next activity *still* starts at its time. The buttons are
   *I understand*, *More information* and *I need help*.
+* **Add Something to Do**: a button on free-time cards. The participant chooses
+  **Use AI** (types plain text, which is sent to `EventDraftGenerator`, or split
+  locally if AI is unavailable) or **Do It Myself** (picks an idea, a start and a
+  length). `FreeTimePlanner` keeps everything inside the free-time window, so staff
+  activities are never touched. The result is published with
+  `ScheduleStore.addParticipantEvents`. This does not show a "plan changed" notice, and
+  the card says "You added this".
+* **Task colours**: a colour band at the top of the card, when staff gave the task a colour.
 * **WEEK**: a simple visual row per day.
 * **HELP**: four large options. Each needs a confirmation step, then creates a support request.
 
@@ -139,13 +147,33 @@ Sidebar sections: **Today · Participants · Schedule · Routines · Library · 
   **Preview as Participant** and assign routine.
 * **Schedule**: Day (time grid with overlap layout), Week and Participant views,
   *Add manually*, *Build with AI*, plus publishing of drafts.
-* **Activity editor**: library pre-fill, all fields from the brief, a live impact check,
-  and **Save draft · Preview · Publish**.
+* **Activity editor**: library pre-fill, all fields from the brief, a **Task Colour**
+  picker (`TaskColor`; mustard is left out because it means "changed"), a live
+  impact check, and **Save Draft · Preview · Publish**.
+* **Groups** (Participants page): staff create named groups (`GroupStore`). Every
+  `ParticipantSelector` shows them as one-tap chips (editor, assign routine, Build
+  with AI), so activities, changes and routines reach a whole group at once.
 * **Cancel activity…**: `ChangeManagementPage`. It runs: (1) "What happens instead?"
   (Free time / Replacement / Move another activity / Plan B), (2) impact, (3) participant
   preview, then **Publish change**.
 * **Routines**: templates you can create, edit, duplicate and assign. Assigning creates *drafts*.
 * **Library**: activities, places, people and pictograms (adding requires the admin role).
+* **Activity photos**: in the event details, a **Photo** section lists the assigned
+  participants, each with *Add / Change Photo*. The flow (`ActivityPhotoDialog`) is
+  *Take Photo* or *Choose from Gallery* → preview → *Use This Photo* (confirm) →
+  progress → saved. *Use Pictogram Instead* removes the photo after a confirmation.
+  Errors keep the preview and leave the activity unchanged, and the staff member can
+  retry. The pictogram itself is still chosen in the activity editor. Only published
+  activities can get a photo. Cards show the photo, else the pictogram, else the symbol
+  icon, else a default icon (`ActivityVisual`).
+  * Real backend: `SupabaseSync` implements `ActivityPhotos` on top of
+    `TaskImageService` (private bucket `task-images`, `activities.image_path`, short-lived
+    signed URLs that are never stored). The contract is in `supabase/README.md`, "Task photos".
+  * Offline demo: `InMemoryActivityPhotos` (same image preparation, in memory). One
+    photo is shared by everyone assigned to the event.
+  * Android: `image_picker` uses the system camera and Photo Picker, so no
+    permission is declared. It has not been tested on a device or emulator. iOS has
+    camera and photo library usage strings.
 
 ### Cancellation rules
 
@@ -191,9 +219,16 @@ snapshots (`ScheduleSnapshot.applying`) and `ChangeFactory`.
 **Add a staff feature.** Create `screens_staff/<feature>/`, add an
 `AdminDestination` in `admin_shell.dart`, and add its page to `_page()`.
 
-**Change colours.** Edit only `lib/theme.dart`. Use `PlannerPalette.standard` and
-`highContrast` for UI colours, and `CategoryStyle` for categories. The TEACCH category colours
-come from CLAUDE.md §5.
+**Change colours.** Edit only `lib/theme.dart` ("Groovy Calm"). `PlannerPalette` has
+three variants: `standard` (light), `highContrast` (participant option) and `dark` (staff
+only, toggled from the staff app bar via `AdminThemeController` in `lib/app/admin_theme.dart`).
+Each meaning is a `SemanticTone` (`color` = text-safe, `accent` = pure hue, `soft` = tint):
+petrol = work, lavender = support, apricot = travel, mustard = change, dusty blue =
+residential/personal, sage = free time and meals. Red (`danger`) is only for real errors.
+Use `CategoryStyle.of(category, context.palette)` for categories.
+`test/planner/theme_contrast_test.dart` checks WCAG AA for every palette.
+These display colours replace the CLAUDE.md §5 hex values in the UI. The legacy
+`ScheduleItem.colorHex` data is unchanged.
 
 **Change information density.** Edit `CardPresentation.forProfile` in
 `core/logic/presentation_rules.dart`. Cards only read that object.
@@ -202,6 +237,14 @@ come from CLAUDE.md §5.
 `EventDraftGenerator`, then wire them in `AppServices`. Screens do not change.
 
 ## Integration notes for the team
+
+* **Not yet synced to Supabase** (backend change needed in `lib/services/supabase_sync.dart`):
+  * `ScheduledEvent.color` and `ScheduledEvent.createdByParticipantId`. Add them to
+    `meta` in `_toItem` and read them in `_fromRow`.
+  * Participant groups. These are only in `GroupStore` (in memory).
+  * Participants publishing their own activities may also need an RLS policy.
+* **UI text style**: buttons, headings, tabs, badges and form labels use Title Case.
+  Sentences, hints and status messages use sentence case.
 
 * `lib/main.dart` still runs the original demo. To switch to the MVP during final
   integration, change it to `runApp(const PlannerApp());` (import

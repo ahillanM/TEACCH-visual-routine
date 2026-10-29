@@ -12,10 +12,10 @@ class AdminSettingsPage extends StatelessWidget {
 
   /// DEMO ONLY: useful moments of the mock training day.
   static const _demoMoments = <(String, int, int)>[
-    ('Before the day', 6, 45),
+    ('Before the Day', 6, 45),
     ('Bus to BBW', 8, 40),
-    ('During workshop', 9, 40),
-    ('Workshop almost over', 10, 56),
+    ('During Workshop', 9, 40),
+    ('Workshop Almost Over', 10, 56),
     ('Lunch', 11, 45),
     ('Evening', 19, 30),
   ];
@@ -44,7 +44,7 @@ class AdminSettingsPage extends StatelessWidget {
                 OutlinedButton.icon(
                   onPressed: () => services.auth.signOut(),
                   icon: const Icon(Icons.logout_rounded),
-                  label: const Text('Sign out'),
+                  label: const Text('Sign Out'),
                 ),
               ],
             ),
@@ -75,7 +75,7 @@ class AdminSettingsPage extends StatelessWidget {
                       onPressed: () => clock.shift(const Duration(minutes: 15)),
                     ),
                     ActionChip(
-                      label: const Text('Use real time'),
+                      label: const Text('Use Real Time'),
                       onPressed: clock.useRealTime,
                     ),
                   ],

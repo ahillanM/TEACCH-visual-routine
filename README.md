@@ -1,8 +1,8 @@
-# bbw_visual_routine
+# OnTime
 
 A new Flutter project.
 
-## BBW Visual Planner MVP
+## OnTime MVP
 
 TEACCH-oriented daily/weekly planner with separate participant and staff
 interfaces. Run it with:

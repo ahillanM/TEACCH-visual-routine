@@ -12,7 +12,7 @@ void main() {
 
     await tester.pumpWidget(PlannerApp(services: services));
 
-    expect(find.text('BBW Visual Planner'), findsOneWidget);
-    expect(find.text('Sign in'), findsWidgets);
+    expect(find.text('OnTime'), findsOneWidget);
+    expect(find.text('Sign In'), findsWidgets);
   });
 }

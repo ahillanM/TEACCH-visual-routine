@@ -8,6 +8,7 @@ import '../../widgets/common.dart';
 import '../changes/change_management_page.dart';
 import '../common/staff_widgets.dart';
 import '../editor/activity_editor_page.dart';
+import '../photos/activity_photo_section.dart';
 import '../preview/participant_preview_dialog.dart';
 
 /// Opens the activity editor for a new or existing event.
@@ -64,7 +65,7 @@ class _EventDetailSheet extends StatelessWidget {
                 .toList()
               ..sort())
             .join(', ');
-        final style = CategoryStyle.of(event.category);
+        final style = CategoryStyle.of(event.category, context.palette);
 
         return SafeArea(
           child: SingleChildScrollView(
@@ -103,6 +104,11 @@ class _EventDetailSheet extends StatelessWidget {
                     icon: Icons.groups_outlined,
                     text: names.isEmpty ? 'No participants assigned' : names),
                 const SizedBox(height: AppSpace.xl),
+                ActivityPhotoSection(
+                  event: event,
+                  isPublished: isPublished,
+                  isDraft: isDraft,
+                ),
                 Wrap(
                   spacing: AppSpace.sm,
                   runSpacing: AppSpace.sm,
@@ -134,7 +140,7 @@ class _EventDetailSheet extends StatelessWidget {
                               event.assignedParticipantIds.toList()..sort(),
                         ),
                         icon: const Icon(Icons.phone_android_rounded),
-                        label: const Text('Preview as participant'),
+                        label: const Text('Preview as Participant'),
                       ),
                     if (isDraft) ...[
                       FilledButton.icon(
@@ -148,7 +154,7 @@ class _EventDetailSheet extends StatelessWidget {
                           showStaffMessage(context, 'Draft published.');
                         },
                         icon: const Icon(Icons.send_rounded),
-                        label: const Text('Publish draft'),
+                        label: const Text('Publish Draft'),
                       ),
                       TextButton.icon(
                         onPressed: () {
@@ -156,7 +162,7 @@ class _EventDetailSheet extends StatelessWidget {
                           Navigator.pop(context);
                         },
                         icon: const Icon(Icons.undo_rounded),
-                        label: const Text('Discard draft'),
+                        label: const Text('Discard Draft'),
                       ),
                     ],
                   ],

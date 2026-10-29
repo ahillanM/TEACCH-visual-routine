@@ -5,6 +5,7 @@ import '../core/ai/event_draft_generator.dart';
 import '../core/auth/auth_controller.dart';
 import '../core/auth/auth_service.dart';
 import '../core/planning/free_time_planner.dart';
+import '../core/data/mock_groups.dart';
 import '../core/data/mock_library.dart';
 import '../core/data/mock_participants.dart';
 import '../core/data/mock_routines.dart';
@@ -12,6 +13,8 @@ import '../core/data/mock_schedules.dart';
 import '../core/logic/change_planner.dart';
 import '../core/models/schedule_snapshot.dart';
 import '../core/models/support_request.dart';
+import '../core/state/group_store.dart';
+import '../core/state/in_memory_photos.dart';
 import '../core/state/library_store.dart';
 import '../core/state/participant_directory.dart';
 import '../core/state/progress_store.dart';
@@ -45,17 +48,21 @@ class AppServices {
   final EventDraftGenerator aiDrafts;
   final ProgressStore progress;
 
+  /// Staff-made participant groups (local only, not synced yet).
+  final GroupStore groups;
+
   /// Server errors to show to the user (null when there is none).
   final ValueNotifier<String?> errors;
 
   /// Dictation for "Build with AI" (device speech recognition).
   final SpeechInput speech;
 
-  /// Custom activity photos (Supabase Storage); null in the offline demo.
+  /// Custom activity photos: Supabase Storage, or in-memory in the offline
+  /// demo. Null hides the photo controls.
   final ActivityPhotos? photos;
 
   /// Participant "Plan my free time"; null hides the feature (offline demo).
-  final FreeTimePlanner? freeTime;
+  final FreeTimeBackend? freeTime;
 
   AppServices({
     required this.clock,
@@ -68,11 +75,13 @@ class AppServices {
     required this.aiDrafts,
     ProgressStore? progress,
     ValueNotifier<String?>? errors,
+    GroupStore? groups,
     SpeechInput? speech,
     this.photos,
     this.freeTime,
   }) : progress = progress ?? ProgressStore(),
        errors = errors ?? ValueNotifier(null),
+       groups = groups ?? GroupStore(),
        speech = speech ?? DeviceSpeechInput();
 
   /// Demo start time: during the morning workshop, so the core scenario
@@ -84,7 +93,7 @@ class AppServices {
   factory AppServices.demo({
     DemoClock? clock,
     SpeechInput? speech,
-    FreeTimePlanner? freeTime,
+    FreeTimeBackend? freeTime,
   }) {
     final demoClock =
         clock ?? DemoClock(startHour: demoStartHour, startMinute: demoStartMinute);
@@ -145,8 +154,10 @@ class AppServices {
       ),
       routines: RoutineStore(mockRoutines),
       aiDrafts: const MockEventDraftGenerator(),
+      groups: GroupStore(mockGroups),
       speech: speech,
       freeTime: freeTime,
+      photos: InMemoryActivityPhotos(schedule),
     );
   }
 
@@ -201,7 +212,7 @@ class AppServices {
       progress: sync.progress,
       errors: sync.errors,
       photos: sync,
-      freeTime: SupabaseFreeTimePlanner(db: db, ai: ai, onSaved: sync.refresh),
+      freeTime: SupabaseFreeTimeBackend(db: db, ai: ai, onSaved: sync.refresh),
     );
   }
 
@@ -214,5 +225,6 @@ class AppServices {
     library.dispose();
     routines.dispose();
     progress.dispose();
+    groups.dispose();
   }
 }

@@ -7,7 +7,7 @@ import '../core/logic/free_time.dart';
 import '../core/planning/free_time_planner.dart';
 import 'backend_event_draft_generator.dart';
 
-/// [FreeTimePlanner] backed by Supabase (availability + saving) and the
+/// [FreeTimeBackend] backed by Supabase (availability + saving) and the
 /// existing FastAPI AI endpoint (drafts only).
 ///
 /// * `get_planning_day` returns the window and busy periods computed on the
@@ -17,14 +17,14 @@ import 'backend_event_draft_generator.dart';
 ///   conflicts, but it never decides availability: [FreeTimeRules] checks
 ///   the drafts here and `save_personal_free_time_plan` checks them again
 ///   atomically on the server.
-class SupabaseFreeTimePlanner implements FreeTimePlanner {
+class SupabaseFreeTimeBackend implements FreeTimeBackend {
   final SupabaseClient db;
   final BackendEventDraftGenerator ai;
 
   /// Called after a successful save (e.g. reload the schedule).
   final Future<void> Function() onSaved;
 
-  SupabaseFreeTimePlanner({
+  SupabaseFreeTimeBackend({
     required this.db,
     required this.ai,
     required this.onSaved,

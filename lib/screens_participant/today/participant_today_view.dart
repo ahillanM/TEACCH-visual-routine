@@ -16,10 +16,7 @@ class ParticipantTodayView extends StatelessWidget {
   final VoidCallback? onOpenChanges;
   final void Function(FeedEntry entry)? onOpenDetails;
   final VoidCallback? onShowChanges;
-
-  /// Participant only (null in staff preview): plan free time, optionally
-  /// for the tapped free-time / end-of-day entry.
-  final void Function(FeedEntry entry)? onPlanFreeTime;
+  final void Function(FeedEntry entry)? onAddToFreeTime;
 
   const ParticipantTodayView({
     super.key,
@@ -28,7 +25,7 @@ class ParticipantTodayView extends StatelessWidget {
     this.onOpenChanges,
     this.onOpenDetails,
     this.onShowChanges,
-    this.onPlanFreeTime,
+    this.onAddToFreeTime,
   });
 
   @override
@@ -43,7 +40,11 @@ class ParticipantTodayView extends StatelessWidget {
         if (day.hasPendingChanges)
           Padding(
             padding: const EdgeInsets.fromLTRB(
-                AppSpace.lg, 0, AppSpace.lg, AppSpace.md),
+              AppSpace.lg,
+              0,
+              AppSpace.lg,
+              AppSpace.md,
+            ),
             child: PlanChangedBanner(onOpen: onOpenChanges),
           ),
         Expanded(
@@ -53,7 +54,7 @@ class ParticipantTodayView extends StatelessWidget {
             now: day.now,
             onOpenDetails: onOpenDetails,
             onShowChanges: onShowChanges,
-            onPlanFreeTime: onPlanFreeTime,
+            onAddToFreeTime: onAddToFreeTime,
           ),
         ),
       ],
@@ -72,7 +73,11 @@ class _DayHeader extends StatelessWidget {
     final palette = context.palette;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          AppSpace.lg, AppSpace.lg, AppSpace.sm, AppSpace.md),
+        AppSpace.lg,
+        AppSpace.lg,
+        AppSpace.sm,
+        AppSpace.md,
+      ),
       child: Row(
         children: [
           Expanded(
@@ -81,8 +86,10 @@ class _DayHeader extends StatelessWidget {
               children: [
                 Semantics(
                   header: true,
-                  child: Text('Today',
-                      style: Theme.of(context).textTheme.headlineMedium),
+                  child: Text(
+                    'Today',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
                 ),
                 Text(
                   '${TimeFormat.longDate(date)} · ${TimeFormat.hm(date)}',

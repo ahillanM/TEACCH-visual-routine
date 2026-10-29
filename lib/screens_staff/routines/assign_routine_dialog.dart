@@ -50,7 +50,7 @@ class _AssignRoutineDialogState extends State<_AssignRoutineDialog> {
     final template = templates.where((t) => t.id == _templateId).firstOrNull;
 
     return AlertDialog(
-      title: const Text('Assign routine'),
+      title: const Text('Assign Routine'),
       content: SizedBox(
         width: 520,
         child: SingleChildScrollView(
@@ -126,7 +126,7 @@ class _AssignRoutineDialogState extends State<_AssignRoutineDialog> {
                       '${events.length} draft activities created for ${TimeFormat.longDate(day)}. '
                       'Customise and publish them in Schedule.');
                 },
-          child: const Text('Create drafts'),
+          child: const Text('Create Drafts'),
         ),
       ],
     );

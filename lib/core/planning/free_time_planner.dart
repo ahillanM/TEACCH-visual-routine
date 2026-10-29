@@ -12,7 +12,7 @@ class PlanSaveException implements Exception {
 
 /// Boundary for "Plan my free time". The UI only talks to this interface;
 /// the Supabase + AI implementation lives in `lib/services/`.
-abstract class FreeTimePlanner {
+abstract class FreeTimeBackend {
   /// Current availability for the signed-in participant on [date].
   Future<PlanningDay> loadDay(DateTime date);
 

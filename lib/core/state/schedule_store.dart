@@ -166,6 +166,28 @@ class ScheduleStore extends ChangeNotifier {
     return change;
   }
 
+  /// Publishes activities a participant added to their own free time.
+  ///
+  /// The participant made this change themselves, so it never triggers a
+  /// "Your plan has changed" notice for them (unless staff changes are
+  /// already waiting, which they still need to see first).
+  ChangeEvent? addParticipantEvents({
+    required String participantId,
+    required String participantName,
+    required List<ScheduledEvent> events,
+  }) {
+    final wasUpToDate = pendingChangesFor(participantId).isEmpty;
+    final change = publish(
+      upserts: [
+        for (final e in events)
+          e.copyWith(assignedParticipantIds: {participantId}),
+      ],
+      publishedBy: '$participantName (self)',
+    );
+    if (change != null && wasUpToDate) acknowledge(participantId);
+    return change;
+  }
+
   // ---------------------------------------------------------------- remote
 
   /// Replaces everything with server state (after login / logout). Nothing
@@ -240,7 +262,20 @@ class ScheduleStore extends ChangeNotifier {
   static bool _sameVisual(VisualRef a, VisualRef b) =>
       a.symbol == b.symbol &&
       a.pictogramUrl == b.pictogramUrl &&
-      a.photoUrl == b.photoUrl;
+      a.photoUrl == b.photoUrl &&
+      identical(a.photoBytes, b.photoBytes);
+
+  /// Replaces only the visual of a published event (e.g. a new photo).
+  /// Not a schedule change: participants get no notice and nothing moves.
+  void setPublishedVisual(String eventId, VisualRef visual) {
+    final before = published[eventId];
+    if (before == null) return;
+    _history.add(published.applying(
+      [before.copyWith(visual: visual)],
+      version: version + 1,
+    ));
+    notifyListeners();
+  }
 
   /// Publishes all current drafts on [day] (or every draft if null).
   ChangeEvent? publishDrafts({required String publishedBy, DateTime? day}) {

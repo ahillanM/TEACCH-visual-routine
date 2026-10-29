@@ -59,9 +59,9 @@ class LibraryPage extends StatelessWidget {
                     _ItemGrid(items: [
                       for (final a in library.activities)
                         _Item(a.name, a.participantDescription.isEmpty
-                            ? CategoryStyle.of(a.category).label
+                            ? CategoryStyle.of(a.category, context.palette).label
                             : a.participantDescription,
-                            a.visual, CategoryStyle.of(a.category).color),
+                            a.visual, CategoryStyle.of(a.category, context.palette).color),
                     ]),
                     _ItemGrid(items: [
                       for (final p in library.places)

@@ -42,7 +42,7 @@ class _ChangeNoticePageState extends State<ChangeNoticePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Plan changed'),
+        title: const Text('Plan Changed'),
         automaticallyImplyLeading: !widget.previewOnly,
       ),
       body: MaxWidth(
@@ -50,10 +50,37 @@ class _ChangeNoticePageState extends State<ChangeNoticePage> {
         child: ListView(
           padding: const EdgeInsets.all(AppSpace.lg),
           children: [
-            Semantics(
-              header: true,
-              child: Text('Your plan has changed.',
-                  style: Theme.of(context).textTheme.headlineSmall),
+            Container(
+              padding: const EdgeInsets.all(AppSpace.lg),
+              decoration: BoxDecoration(
+                color: context.palette.changeSurface,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border(
+                  left: BorderSide(
+                    color: context.palette.changeBorder,
+                    width: 6,
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.published_with_changes_rounded,
+                    size: 32,
+                    color: context.palette.changeText,
+                  ),
+                  const SizedBox(width: AppSpace.md),
+                  Expanded(
+                    child: Semantics(
+                      header: true,
+                      child: Text(
+                        'Your plan has changed.',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: AppSpace.lg),
             ChangeNoticeView(notice: widget.notice),
@@ -64,7 +91,7 @@ class _ChangeNoticePageState extends State<ChangeNoticePage> {
               child: FilledButton.icon(
                 onPressed: () => _close(ChangeNoticeResult.understood),
                 icon: const Icon(Icons.check_rounded),
-                label: const Text('I understand'),
+                label: const Text('I Understand'),
               ),
             ),
             const SizedBox(height: AppSpace.md),
@@ -72,10 +99,14 @@ class _ChangeNoticePageState extends State<ChangeNoticePage> {
               height: kLargeTouchTarget,
               child: OutlinedButton.icon(
                 onPressed: () => setState(() => _showMore = !_showMore),
-                icon: Icon(_showMore
-                    ? Icons.expand_less_rounded
-                    : Icons.info_outline_rounded),
-                label: Text(_showMore ? 'Less information' : 'More information'),
+                icon: Icon(
+                  _showMore
+                      ? Icons.expand_less_rounded
+                      : Icons.info_outline_rounded,
+                ),
+                label: Text(
+                  _showMore ? 'Less Information' : 'More Information',
+                ),
               ),
             ),
             const SizedBox(height: AppSpace.md),
@@ -84,7 +115,7 @@ class _ChangeNoticePageState extends State<ChangeNoticePage> {
               child: OutlinedButton.icon(
                 onPressed: () => _close(ChangeNoticeResult.needHelp),
                 icon: const Icon(Icons.support_agent_rounded),
-                label: const Text('I need help'),
+                label: const Text('I Need Help'),
               ),
             ),
           ],

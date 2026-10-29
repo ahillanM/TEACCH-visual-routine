@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/models/feed_entry.dart';
+import '../../core/models/task_color.dart';
 import '../../core/time/time_format.dart';
 import '../../theme.dart';
 import '../../widgets/status_badge.dart';
@@ -24,6 +25,9 @@ class CardFrame extends StatelessWidget {
   final VoidCallback? onTap;
   final Widget child;
 
+  /// Colour staff gave this task; shown as a band across the top.
+  final TaskColor? taskColor;
+
   const CardFrame({
     super.key,
     required this.entry,
@@ -34,10 +38,12 @@ class CardFrame extends StatelessWidget {
     required this.child,
     this.isImmediateNext = false,
     this.onTap,
+    this.taskColor,
   });
 
   static const double nowBorderWidth = 3;
   static const double defaultBorderWidth = 1.5;
+  static const double colorBandHeight = 14;
 
   @override
   Widget build(BuildContext context) {
@@ -51,10 +57,13 @@ class CardFrame extends StatelessWidget {
     return Semantics(
       container: true,
       button: onTap != null,
-      label: '${TemporalLabel.textFor(entry.state, isImmediateNext)}. '
-          '$semanticSummary',
+      label:
+          '${TemporalLabel.textFor(entry.state, isImmediateNext)}. '
+          '$semanticSummary'
+          '${taskColor == null ? '' : ' Colour: ${taskColor!.label}.'}',
       child: AnimatedContainer(
         duration: AppMotion.of(context),
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: background,
           borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -68,45 +77,55 @@ class CardFrame extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpace.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  ExcludeSemantics(
-                    child: Row(
-                      children: [
-                        TemporalLabel(
-                          state: entry.state,
-                          isImmediateNext: isImmediateNext,
-                        ),
-                        const SizedBox(width: AppSpace.sm),
-                        Expanded(
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: StatusBadge(
-                              label: categoryLabel,
-                              icon: categoryIcon,
-                              color: accent,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpace.sm),
-                        Text(
-                          TimeFormat.hm(entry.start),
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: palette.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (taskColor != null)
+                  Container(
+                    height: colorBandHeight,
+                    color: TaskColorStyle.of(taskColor!, palette).accent,
                   ),
-                  const SizedBox(height: AppSpace.md),
-                  child,
-                ],
-              ),
+                Padding(
+                  padding: const EdgeInsets.all(AppSpace.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ExcludeSemantics(
+                        child: Row(
+                          children: [
+                            TemporalLabel(
+                              state: entry.state,
+                              isImmediateNext: isImmediateNext,
+                            ),
+                            const SizedBox(width: AppSpace.sm),
+                            Expanded(
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: StatusBadge(
+                                  label: categoryLabel,
+                                  icon: categoryIcon,
+                                  color: accent,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: AppSpace.sm),
+                            Text(
+                              TimeFormat.hm(entry.start),
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: palette.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppSpace.md),
+                      child,
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -139,22 +158,22 @@ class TemporalLabel extends StatelessWidget {
     final text = textFor(state, isImmediateNext);
     return switch (state) {
       TemporalState.now => StatusBadge(
-          label: text,
-          icon: Icons.radio_button_checked_rounded,
-          color: palette.nowAccent,
-          filled: true,
-          fontSize: 15,
-        ),
+        label: text,
+        icon: Icons.radio_button_checked_rounded,
+        color: palette.nowAccent,
+        filled: true,
+        fontSize: 15,
+      ),
       TemporalState.done => StatusBadge(
-          label: text,
-          icon: Icons.check_rounded,
-          color: palette.textSecondary,
-        ),
+        label: text,
+        icon: Icons.check_rounded,
+        color: palette.textSecondary,
+      ),
       TemporalState.next => StatusBadge(
-          label: text,
-          icon: Icons.arrow_downward_rounded,
-          color: palette.textSecondary,
-        ),
+        label: text,
+        icon: Icons.arrow_downward_rounded,
+        color: palette.textSecondary,
+      ),
     };
   }
 }
@@ -181,10 +200,11 @@ class CardHeadline extends StatelessWidget {
       children: [
         Text(
           title,
-          style: (emphasised
-                  ? theme.textTheme.headlineSmall
-                  : theme.textTheme.titleLarge)
-              ?.copyWith(height: 1.2),
+          style:
+              (emphasised
+                      ? theme.textTheme.headlineSmall
+                      : theme.textTheme.titleLarge)
+                  ?.copyWith(height: 1.2),
         ),
         const SizedBox(height: AppSpace.xs),
         Text(

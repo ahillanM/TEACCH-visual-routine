@@ -214,14 +214,14 @@ class NoticeBanner extends StatelessWidget {
                   children: [
                     Text(title,
                         style: TextStyle(
-                            color: palette.changeText,
+                            color: palette.textPrimary,
                             fontWeight: FontWeight.w800,
                             fontSize: 17)),
                     if (message != null) ...[
                       const SizedBox(height: AppSpace.xxs),
                       Text(message!,
                           style: TextStyle(
-                              color: palette.changeText, fontSize: 15)),
+                              color: palette.textPrimary, fontSize: 15)),
                     ],
                   ],
                 ),

@@ -142,9 +142,12 @@ class _EventBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final style = CategoryStyle.of(event.category);
+    final style = CategoryStyle.of(event.category, context.palette);
     final cancelled = event.isCancelled;
     final color = cancelled ? palette.textSecondary : style.color;
+    final strip = cancelled || event.color == null
+        ? color
+        : TaskColorStyle.of(event.color!, palette).accent;
     final status = [
       if (isDraft) 'draft',
       if (cancelled) 'cancelled',
@@ -161,7 +164,7 @@ class _EventBlock extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
           side: isDraft
-              ? BorderSide(color: palette.changeText, width: 1.5)
+              ? BorderSide(color: palette.textSecondary, width: 1.5)
               : BorderSide.none,
         ),
         clipBehavior: Clip.antiAlias,
@@ -169,7 +172,9 @@ class _EventBlock extends StatelessWidget {
           onTap: onTap,
           child: Container(
             decoration: BoxDecoration(
-              border: Border(left: BorderSide(color: color, width: 4)),
+              border: Border(
+                  left: BorderSide(
+                      color: strip, width: event.color == null ? 4 : 8)),
             ),
             padding: const EdgeInsets.symmetric(
                 horizontal: AppSpace.sm, vertical: AppSpace.xxs),
@@ -204,7 +209,7 @@ class _EventBlock extends StatelessWidget {
                             style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
-                                color: palette.changeText)),
+                                color: palette.textSecondary)),
                     ],
                   ),
                   if (roomy)

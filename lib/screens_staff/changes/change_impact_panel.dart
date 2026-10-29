@@ -52,7 +52,7 @@ class ChangeImpactPanel extends StatelessWidget {
             ],
           ),
         const SizedBox(height: AppSpace.lg),
-        Text('Schedule consequences',
+        Text('Schedule Consequences',
             style: const TextStyle(fontWeight: FontWeight.w700)),
         const SizedBox(height: AppSpace.sm),
         if (report.items.isEmpty)
@@ -66,14 +66,14 @@ class ChangeImpactPanel extends StatelessWidget {
                 Icon(
                   iconFor(item.kind),
                   size: 20,
-                  color: item.isConflict ? palette.danger : palette.textSecondary,
+                  color: item.isConflict ? palette.conflict : palette.textSecondary,
                 ),
                 const SizedBox(width: AppSpace.sm),
                 Expanded(
                   child: Text(
                     item.isConflict ? 'Conflict: ${item.message}' : item.message,
                     style: TextStyle(
-                      color: item.isConflict ? palette.danger : palette.textPrimary,
+                      color: item.isConflict ? palette.conflict : palette.textPrimary,
                       fontWeight:
                           item.isConflict ? FontWeight.w700 : FontWeight.w400,
                     ),

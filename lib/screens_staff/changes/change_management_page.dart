@@ -174,13 +174,13 @@ class _ChangeManagementPageState extends State<ChangeManagementPage> {
             children: [
               OutlinedButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Back without changes'),
+                child: const Text('Back Without Changes'),
               ),
               const SizedBox(width: AppSpace.md),
               FilledButton.icon(
                 onPressed: plan == null ? null : () => _publish(plan),
                 icon: const Icon(Icons.send_rounded),
-                label: const Text('Publish change'),
+                label: const Text('Publish Change'),
               ),
             ],
           ),
@@ -279,7 +279,7 @@ class _DecisionColumn extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SectionCard(
-          title: 'Activity to cancel',
+          title: 'Activity to Cancel',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -304,13 +304,13 @@ class _DecisionColumn extends StatelessWidget {
               children: [
                 const RadioListTile(
                   value: _Choice.freeTime,
-                  title: Text('Free time'),
+                  title: Text('Free Time'),
                   subtitle: Text(
                       'Nothing is required. The next activity keeps its time.'),
                 ),
                 const RadioListTile(
                   value: _Choice.replacement,
-                  title: Text('Replacement activity'),
+                  title: Text('Replacement Activity'),
                   subtitle: Text('Assign another activity in the same time slot.'),
                 ),
                 if (choice == _Choice.replacement)
@@ -320,7 +320,7 @@ class _DecisionColumn extends StatelessWidget {
                     child: DropdownButtonFormField<String>(
                       initialValue: replacementActivity?.id,
                       decoration:
-                          const InputDecoration(labelText: 'Activity from library'),
+                          const InputDecoration(labelText: 'Activity from Library'),
                       items: [
                         for (final a in services.library.activities)
                           if (a.id != original.libraryActivityId)
@@ -333,7 +333,7 @@ class _DecisionColumn extends StatelessWidget {
                 RadioListTile(
                   value: _Choice.move,
                   enabled: moveCandidates.isNotEmpty,
-                  title: const Text('Move another activity'),
+                  title: const Text('Move Another Activity'),
                   subtitle: const Text(
                       'Explicitly reschedule a later activity (e.g. lunch earlier).'),
                 ),
@@ -351,7 +351,7 @@ class _DecisionColumn extends StatelessWidget {
                           child: DropdownButtonFormField<String>(
                             initialValue: moveEventId,
                             decoration: const InputDecoration(
-                                labelText: 'Activity to move'),
+                                labelText: 'Activity to Move'),
                             items: [
                               for (final e in moveCandidates)
                                 DropdownMenuItem(
@@ -369,7 +369,7 @@ class _DecisionColumn extends StatelessWidget {
                         ),
                         if (moveEvent != null)
                           TimeField(
-                            label: 'New start',
+                            label: 'New Start',
                             value: moveNewStart ?? moveEvent.start,
                             onChanged: (t) => onMove(moveEvent.id, t),
                           ),

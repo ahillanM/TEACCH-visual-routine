@@ -18,9 +18,8 @@ class FeedEntryCard extends StatelessWidget {
   final void Function(FeedEntry entry)? onOpenDetails;
   final VoidCallback? onShowChanges;
 
-  /// "Plan my free time" from a free-time or end-of-day card (participant
-  /// only; null in staff preview).
-  final void Function(FeedEntry entry)? onPlanFreeTime;
+  /// Lets the participant add their own activities to a free-time block.
+  final void Function(FeedEntry entry)? onAddToFreeTime;
 
   const FeedEntryCard({
     super.key,
@@ -29,7 +28,7 @@ class FeedEntryCard extends StatelessWidget {
     this.isImmediateNext = false,
     this.onOpenDetails,
     this.onShowChanges,
-    this.onPlanFreeTime,
+    this.onAddToFreeTime,
   });
 
   @override
@@ -37,21 +36,37 @@ class FeedEntryCard extends StatelessWidget {
     final open = onOpenDetails == null || entry.event == null
         ? null
         : () => onOpenDetails!(entry);
-    final plan = onPlanFreeTime == null || entry.isDone
-        ? null
-        : () => onPlanFreeTime!(entry);
 
     return switch (entry.kind) {
       FeedEntryKind.activity => TaskCard(
-          entry: entry, now: now, isImmediateNext: isImmediateNext, onTap: open),
+        entry: entry,
+        now: now,
+        isImmediateNext: isImmediateNext,
+        onTap: open,
+      ),
       FeedEntryKind.travelling => TravelCard(
-          entry: entry, now: now, isImmediateNext: isImmediateNext, onTap: open),
+        entry: entry,
+        now: now,
+        isImmediateNext: isImmediateNext,
+        onTap: open,
+      ),
       FeedEntryKind.freeTime => FreeTimeCard(
-          entry: entry, now: now, isImmediateNext: isImmediateNext, onPlan: plan),
+        entry: entry,
+        now: now,
+        isImmediateNext: isImmediateNext,
+        onAdd: onAddToFreeTime == null || entry.isDone
+            ? null
+            : () => onAddToFreeTime!(entry),
+      ),
       FeedEntryKind.waiting || FeedEntryKind.preparing => WaitingCard(
-          entry: entry, isImmediateNext: isImmediateNext, onTap: open),
-      FeedEntryKind.dayFinished =>
-        DayFinishedCard(entry: entry, onShowChanges: onShowChanges, onPlan: plan),
+        entry: entry,
+        isImmediateNext: isImmediateNext,
+        onTap: open,
+      ),
+      FeedEntryKind.dayFinished => DayFinishedCard(
+        entry: entry,
+        onShowChanges: onShowChanges,
+      ),
     };
   }
 }

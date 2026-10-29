@@ -87,7 +87,7 @@ class _ShellHomeState extends State<_ShellHome> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Sign out'),
+            child: const Text('Sign Out'),
           ),
         ],
       ),
@@ -113,12 +113,16 @@ class _ShellHomeState extends State<_ShellHome> {
         backgroundColor: palette.background,
         surfaceTintColor: Colors.transparent,
         titleSpacing: AppSpace.lg,
-        title: Text('Hi ${widget.name}',
-            style: TextStyle(
-                fontWeight: FontWeight.w800, color: palette.textPrimary)),
+        title: Text(
+          'Hi ${widget.name}',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: palette.textPrimary,
+          ),
+        ),
         actions: [
           IconButton(
-            tooltip: 'Sign out',
+            tooltip: 'Sign Out',
             onPressed: _confirmSignOut,
             icon: const Icon(Icons.logout_rounded),
           ),

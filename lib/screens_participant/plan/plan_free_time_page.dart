@@ -59,7 +59,7 @@ class _PlanFreeTimePageState extends State<PlanFreeTimePage> {
   bool _saving = false;
   bool _listening = false;
 
-  FreeTimePlanner get _planner => AppScope.of(context).freeTime!;
+  FreeTimeBackend get _planner => AppScope.of(context).freeTime!;
 
   @override
   void didChangeDependencies() {

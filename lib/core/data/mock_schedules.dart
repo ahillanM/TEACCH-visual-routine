@@ -1,5 +1,6 @@
 import '../models/library_items.dart';
 import '../models/scheduled_event.dart';
+import '../models/task_color.dart';
 import '../time/time_format.dart';
 import 'mock_library.dart';
 import 'mock_participants.dart';
@@ -32,6 +33,13 @@ String mockEventId(String key, DateTime day) =>
 LibraryActivity _activity(String id) =>
     mockLibraryActivities.firstWhere((a) => a.id == id);
 
+/// MOCK: task colours staff chose, so the demo shows colour-coded tasks.
+const _demoColors = {
+  MockActivityIds.woodwork: TaskColor.blue,
+  MockActivityIds.metalwork: TaskColor.rose,
+  MockActivityIds.coaching: TaskColor.lavender,
+};
+
 ScheduledEvent _event(
   String key,
   DateTime day,
@@ -46,7 +54,12 @@ ScheduledEvent _event(
   DateTime at(String hm) {
     final parts = hm.split(':');
     return DateTime(
-        day.year, day.month, day.day, int.parse(parts[0]), int.parse(parts[1]));
+      day.year,
+      day.month,
+      day.day,
+      int.parse(parts[0]),
+      int.parse(parts[1]),
+    );
   }
 
   return ScheduledEvent(
@@ -64,6 +77,7 @@ ScheduledEvent _event(
     assignedParticipantIds: participants,
     libraryActivityId: a.id,
     planBActivityId: planB,
+    color: _demoColors[a.id],
   );
 }
 
@@ -74,68 +88,184 @@ const _elias = MockParticipantIds.elias;
 const _everyone = MockParticipantIds.all;
 
 List<ScheduledEvent> _trainingDay(DateTime day) => [
-      _event(MockEventKeys.breakfast, day, MockActivityIds.breakfast,
-          from: '07:30', to: '08:15', participants: _everyone),
-      _event(MockEventKeys.busToBbw, day, MockActivityIds.busToBbw,
-          from: '08:30',
-          to: '08:50',
-          participants: _everyone,
-          kind: EventKind.travel),
-      // Shared organisational event: one event, three participants.
-      _event(MockEventKeys.woodworkMorning, day, MockActivityIds.woodwork,
-          from: '09:00',
-          to: '11:00',
-          participants: {_lena, _jonas, _mia},
-          planB: MockActivityIds.study),
-      _event(MockEventKeys.metalMorning, day, MockActivityIds.metalwork,
-          from: '09:00', to: '11:00', participants: {_elias}),
-      _event(MockEventKeys.lunch, day, MockActivityIds.lunch,
-          from: '11:30', to: '12:15', participants: _everyone),
-      _event(MockEventKeys.woodworkAfternoon, day, MockActivityIds.woodwork,
-          from: '13:00',
-          to: '15:00',
-          participants: {_lena, _mia},
-          planB: MockActivityIds.study),
-      _event(MockEventKeys.coaching, day, MockActivityIds.coaching,
-          from: '13:00', to: '14:00', participants: {_jonas}),
-      _event(MockEventKeys.metalAfternoon, day, MockActivityIds.metalwork,
-          from: '13:00', to: '15:00', participants: {_elias}),
-      _event(MockEventKeys.sports, day, MockActivityIds.sports,
-          from: '15:00', to: '16:00', participants: {_jonas}),
-      _event(MockEventKeys.busHomeEarly, day, MockActivityIds.busHome,
-          from: '15:15',
-          to: '15:35',
-          participants: {_lena, _mia},
-          kind: EventKind.travel),
-      _event(MockEventKeys.physio, day, MockActivityIds.physio,
-          from: '15:30', to: '16:00', participants: {_elias}),
-      _event(MockEventKeys.busHomeLate, day, MockActivityIds.busHome,
-          from: '16:10',
-          to: '16:30',
-          participants: {_jonas, _elias},
-          kind: EventKind.travel),
-      _event(MockEventKeys.study, day, MockActivityIds.study,
-          from: '16:45', to: '17:30', participants: _everyone),
-      _event(MockEventKeys.dinner, day, MockActivityIds.dinner,
-          from: '18:00', to: '18:45', participants: _everyone),
-      _event(MockEventKeys.evening, day, MockActivityIds.eveningRoutine,
-          from: '21:00', to: '21:30', participants: _everyone),
-    ];
+  _event(
+    MockEventKeys.breakfast,
+    day,
+    MockActivityIds.breakfast,
+    from: '07:30',
+    to: '08:15',
+    participants: _everyone,
+  ),
+  _event(
+    MockEventKeys.busToBbw,
+    day,
+    MockActivityIds.busToBbw,
+    from: '08:30',
+    to: '08:50',
+    participants: _everyone,
+    kind: EventKind.travel,
+  ),
+  // Shared organisational event: one event, three participants.
+  _event(
+    MockEventKeys.woodworkMorning,
+    day,
+    MockActivityIds.woodwork,
+    from: '09:00',
+    to: '11:00',
+    participants: {_lena, _jonas, _mia},
+    planB: MockActivityIds.study,
+  ),
+  _event(
+    MockEventKeys.metalMorning,
+    day,
+    MockActivityIds.metalwork,
+    from: '09:00',
+    to: '11:00',
+    participants: {_elias},
+  ),
+  _event(
+    MockEventKeys.lunch,
+    day,
+    MockActivityIds.lunch,
+    from: '11:30',
+    to: '12:15',
+    participants: _everyone,
+  ),
+  _event(
+    MockEventKeys.woodworkAfternoon,
+    day,
+    MockActivityIds.woodwork,
+    from: '13:00',
+    to: '15:00',
+    participants: {_lena, _mia},
+    planB: MockActivityIds.study,
+  ),
+  _event(
+    MockEventKeys.coaching,
+    day,
+    MockActivityIds.coaching,
+    from: '13:00',
+    to: '14:00',
+    participants: {_jonas},
+  ),
+  _event(
+    MockEventKeys.metalAfternoon,
+    day,
+    MockActivityIds.metalwork,
+    from: '13:00',
+    to: '15:00',
+    participants: {_elias},
+  ),
+  _event(
+    MockEventKeys.sports,
+    day,
+    MockActivityIds.sports,
+    from: '15:00',
+    to: '16:00',
+    participants: {_jonas},
+  ),
+  _event(
+    MockEventKeys.busHomeEarly,
+    day,
+    MockActivityIds.busHome,
+    from: '15:15',
+    to: '15:35',
+    participants: {_lena, _mia},
+    kind: EventKind.travel,
+  ),
+  _event(
+    MockEventKeys.physio,
+    day,
+    MockActivityIds.physio,
+    from: '15:30',
+    to: '16:00',
+    participants: {_elias},
+  ),
+  _event(
+    MockEventKeys.busHomeLate,
+    day,
+    MockActivityIds.busHome,
+    from: '16:10',
+    to: '16:30',
+    participants: {_jonas, _elias},
+    kind: EventKind.travel,
+  ),
+  _event(
+    MockEventKeys.study,
+    day,
+    MockActivityIds.study,
+    from: '16:45',
+    to: '17:30',
+    participants: _everyone,
+  ),
+  _event(
+    MockEventKeys.dinner,
+    day,
+    MockActivityIds.dinner,
+    from: '18:00',
+    to: '18:45',
+    participants: _everyone,
+  ),
+  _event(
+    MockEventKeys.evening,
+    day,
+    MockActivityIds.eveningRoutine,
+    from: '21:00',
+    to: '21:30',
+    participants: _everyone,
+  ),
+];
 
 List<ScheduledEvent> _weekendDay(DateTime day) => [
-      _event(MockEventKeys.breakfast, day, MockActivityIds.breakfast,
-          from: '09:00', to: '09:45', participants: _everyone),
-      _event(MockEventKeys.groupMeeting, day, MockActivityIds.groupMeeting,
-          from: '10:30', to: '11:15', participants: _everyone),
-      _event(MockEventKeys.lunch, day, MockActivityIds.lunch,
-          from: '12:30', to: '13:15', participants: _everyone),
-      _event(MockEventKeys.leisure, day, MockActivityIds.boardGames,
-          from: '14:00', to: '15:30', participants: _everyone),
-      _event(MockEventKeys.dinner, day, MockActivityIds.dinner,
-          from: '18:00', to: '18:45', participants: _everyone),
-      _event(MockEventKeys.evening, day, MockActivityIds.eveningRoutine,
-          from: '21:30', to: '22:00', participants: _everyone),
-    ];
+  _event(
+    MockEventKeys.breakfast,
+    day,
+    MockActivityIds.breakfast,
+    from: '09:00',
+    to: '09:45',
+    participants: _everyone,
+  ),
+  _event(
+    MockEventKeys.groupMeeting,
+    day,
+    MockActivityIds.groupMeeting,
+    from: '10:30',
+    to: '11:15',
+    participants: _everyone,
+  ),
+  _event(
+    MockEventKeys.lunch,
+    day,
+    MockActivityIds.lunch,
+    from: '12:30',
+    to: '13:15',
+    participants: _everyone,
+  ),
+  _event(
+    MockEventKeys.leisure,
+    day,
+    MockActivityIds.boardGames,
+    from: '14:00',
+    to: '15:30',
+    participants: _everyone,
+  ),
+  _event(
+    MockEventKeys.dinner,
+    day,
+    MockActivityIds.dinner,
+    from: '18:00',
+    to: '18:45',
+    participants: _everyone,
+  ),
+  _event(
+    MockEventKeys.evening,
+    day,
+    MockActivityIds.eveningRoutine,
+    from: '21:30',
+    to: '22:00',
+    participants: _everyone,
+  ),
+];
 
 /// One week (Monday–Sunday) of published events around [today].
 ///
@@ -167,8 +297,14 @@ List<ScheduledEvent> seedLocationChange(
 /// (replacement case, not yet acknowledged by Jonas).
 ScheduledEvent seedSportsReplacement(DateTime today) {
   final games = _activity(MockActivityIds.boardGames);
-  final sports = _event(MockEventKeys.sports, today, MockActivityIds.sports,
-      from: '15:00', to: '16:00', participants: {_jonas});
+  final sports = _event(
+    MockEventKeys.sports,
+    today,
+    MockActivityIds.sports,
+    from: '15:00',
+    to: '16:00',
+    participants: {_jonas},
+  );
   return ScheduledEvent(
     id: mockEventId('board-games-replacement', today),
     title: games.name,

@@ -80,7 +80,7 @@ class _RoutineEditorState extends State<_RoutineEditor> {
   Widget build(BuildContext context) {
     final library = AppScope.of(context).library;
     return AlertDialog(
-      title: Text(widget.template == null ? 'New routine' : 'Edit routine'),
+      title: Text(widget.template == null ? 'New Routine' : 'Edit Routine'),
       content: SizedBox(
         width: 640,
         child: SingleChildScrollView(
@@ -108,8 +108,8 @@ class _RoutineEditorState extends State<_RoutineEditor> {
                     runSpacing: AppSpace.xs,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Icon(CategoryStyle.of(_steps[i].category).icon,
-                          color: CategoryStyle.of(_steps[i].category).color),
+                      Icon(CategoryStyle.of(_steps[i].category, context.palette).icon,
+                          color: CategoryStyle.of(_steps[i].category, context.palette).color),
                       SizedBox(
                         width: 180,
                         child: Text(_steps[i].title,
@@ -139,7 +139,7 @@ class _RoutineEditorState extends State<_RoutineEditor> {
                         ),
                       ),
                       IconButton(
-                        tooltip: 'Remove step',
+                        tooltip: 'Remove Step',
                         onPressed: () => setState(() => _steps.removeAt(i)),
                         icon: const Icon(Icons.remove_circle_outline_rounded),
                       ),
@@ -150,7 +150,7 @@ class _RoutineEditorState extends State<_RoutineEditor> {
               DropdownButtonFormField<String>(
                 key: ValueKey(_steps.length),
                 decoration: const InputDecoration(
-                  labelText: 'Add step from library',
+                  labelText: 'Add Step from Library',
                   prefixIcon: Icon(Icons.add_rounded),
                 ),
                 items: [
@@ -168,7 +168,7 @@ class _RoutineEditorState extends State<_RoutineEditor> {
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
-        FilledButton(onPressed: _save, child: const Text('Save routine')),
+        FilledButton(onPressed: _save, child: const Text('Save Routine')),
       ],
     );
   }

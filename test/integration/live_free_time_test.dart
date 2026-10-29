@@ -47,7 +47,7 @@ class _App {
   );
   late final SupabaseSync sync;
   late final ScheduleStore store;
-  late final SupabaseFreeTimePlanner planner;
+  late final SupabaseFreeTimeBackend planner;
 
   _App() {
     sync = SupabaseSync(
@@ -64,7 +64,7 @@ class _App {
       initial: ScheduleSnapshot(version: 1, publishedAt: DateTime.now(), events: const {}),
     );
     sync.attach(store);
-    planner = SupabaseFreeTimePlanner(
+    planner = SupabaseFreeTimeBackend(
       db: db,
       ai: BackendEventDraftGenerator(baseUrl: Uri.parse(AppConfig.aiBackendUrl)),
       onSaved: sync.refresh,

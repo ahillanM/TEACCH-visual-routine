@@ -11,21 +11,22 @@ import 'card_frame.dart';
 import 'next_hint.dart';
 import 'time_progress.dart';
 
-/// "Nothing is required right now." Free time is never filled with tasks.
+/// "Nothing is required right now." Staff never fill free time with tasks;
+/// participants may add their own activities with [onAdd].
 class FreeTimeCard extends StatelessWidget {
   final FeedEntry entry;
   final DateTime now;
   final bool isImmediateNext;
 
-  /// Opens "Plan my free time" for this slot.
-  final VoidCallback? onPlan;
+  /// Opens "Add to my free time". Null hides the button (e.g. staff preview).
+  final VoidCallback? onAdd;
 
   const FreeTimeCard({
     super.key,
     required this.entry,
     required this.now,
     this.isImmediateNext = false,
-    this.onPlan,
+    this.onAdd,
   });
 
   static const _visual = VisualRef.arasaac('free', 11653);
@@ -33,7 +34,7 @@ class FreeTimeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final presentation = ParticipantPresentationScope.of(context);
-    final style = CategoryStyle.of(ActivityCategory.freeTime);
+    final style = CategoryStyle.of(ActivityCategory.freeTime, context.palette);
     final until = entry.end;
     final timeText = until == null ? '' : 'Until ${TimeFormat.hm(until)}';
 
@@ -43,7 +44,6 @@ class FreeTimeCard extends StatelessWidget {
       categoryIcon: style.icon,
       categoryLabel: style.label,
       isImmediateNext: isImmediateNext,
-      onTap: onPlan,
       semanticSummary: 'Free time. $timeText. Nothing is required.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -51,7 +51,7 @@ class FreeTimeCard extends StatelessWidget {
           ActivityVisual(
             visual: _visual,
             accent: style.color,
-            semanticLabel: 'Free time',
+            semanticLabel: 'Free Time',
             height: entry.isNow ? 150 : 110,
             showPhoto: presentation.showPhoto,
             showSymbol: presentation.showSymbol,
@@ -59,23 +59,18 @@ class FreeTimeCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpace.md),
           CardHeadline(
-            title: 'Free time',
+            title: 'Free Time',
             timeText: timeText,
             emphasised: entry.isNow,
           ),
           const SizedBox(height: AppSpace.sm),
           Text(
             'Nothing is required right now.',
-            style: TextStyle(fontSize: 17, color: context.palette.textSecondary),
-          ),
-          if (onPlan != null) ...[
-            const SizedBox(height: AppSpace.md),
-            OutlinedButton.icon(
-              onPressed: onPlan,
-              icon: const Icon(Icons.edit_calendar_rounded),
-              label: const Text('Plan this free time'),
+            style: TextStyle(
+              fontSize: 17,
+              color: context.palette.textSecondary,
             ),
-          ],
+          ),
           if (entry.isNow) ...[
             const SizedBox(height: AppSpace.lg),
             TimeProgress(
@@ -88,6 +83,17 @@ class FreeTimeCard extends StatelessWidget {
               const SizedBox(height: AppSpace.sm),
               NextHint(next: entry.nextEvent!),
             ],
+          ],
+          if (onAdd != null) ...[
+            const SizedBox(height: AppSpace.lg),
+            SizedBox(
+              height: kLargeTouchTarget,
+              child: OutlinedButton.icon(
+                onPressed: onAdd,
+                icon: const Icon(Icons.add_circle_outline_rounded),
+                label: const Text('Add Something to Do'),
+              ),
+            ),
           ],
         ],
       ),

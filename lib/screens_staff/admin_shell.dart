@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../app/admin_theme.dart';
 import '../app/app_scope.dart';
 import '../core/time/time_format.dart';
 import '../theme.dart';
@@ -71,12 +72,17 @@ class _AdminShellState extends State<AdminShell> {
             Icon(Icons.view_day_rounded, color: palette.brand),
             const SizedBox(width: AppSpace.sm),
             const Flexible(
-              child: Text('BBW Visual Planner · Staff',
+              child: Text('OnTime · Staff',
                   overflow: TextOverflow.ellipsis),
             ),
           ],
         ),
-        actions: const [_ClockChip(), SizedBox(width: AppSpace.md)],
+        actions: const [
+          _ThemeToggle(),
+          SizedBox(width: AppSpace.xs),
+          _ClockChip(),
+          SizedBox(width: AppSpace.md),
+        ],
       ),
       drawer: useRail
           ? null
@@ -120,6 +126,24 @@ class _AdminShellState extends State<AdminShell> {
               ],
             )
           : page,
+    );
+  }
+}
+
+/// Switches the staff interface between the light and dark theme.
+class _ThemeToggle extends StatelessWidget {
+  const _ThemeToggle();
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = AdminThemeScope.of(context);
+    final dark = controller.isDark;
+    return IconButton(
+      tooltip: dark ? 'Switch to Light Theme' : 'Switch to Dark Theme',
+      isSelected: dark,
+      onPressed: controller.toggle,
+      icon: const Icon(Icons.dark_mode_outlined),
+      selectedIcon: const Icon(Icons.light_mode_outlined),
     );
   }
 }

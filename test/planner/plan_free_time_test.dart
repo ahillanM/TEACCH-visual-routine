@@ -9,7 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'voice_input_test.dart' show FakeSpeech;
 
-class FakePlanner implements FreeTimePlanner {
+class FakePlanner implements FreeTimeBackend {
   PlanningDay day;
   List<DraftActivity> suggestion = const [];
   String? lastText;

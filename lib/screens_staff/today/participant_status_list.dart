@@ -13,9 +13,9 @@ class ParticipantStatusList extends StatelessWidget {
   const ParticipantStatusList({super.key});
 
   static String describe(FeedEntry entry) => switch (entry.kind) {
-    FeedEntryKind.freeTime => 'Free time',
+    FeedEntryKind.freeTime => 'Free Time',
     FeedEntryKind.waiting => 'Waiting',
-    FeedEntryKind.dayFinished => 'Day finished',
+    FeedEntryKind.dayFinished => 'Day Finished',
     _ => entry.event?.title ?? '—',
   };
 
@@ -61,13 +61,13 @@ class ParticipantStatusList extends StatelessWidget {
                     ),
                     trailing: day.hasPendingChanges
                         ? StatusBadge(
-                            label: 'Change not seen',
+                            label: 'Change Not Seen',
                             icon: Icons.mark_chat_unread_outlined,
                             color: palette.changeText,
                             fontSize: 11,
                           )
                         : StatusBadge(
-                            label: 'Up to date',
+                            label: 'Up to Date',
                             icon: Icons.check_rounded,
                             color: palette.success,
                             fontSize: 11,
