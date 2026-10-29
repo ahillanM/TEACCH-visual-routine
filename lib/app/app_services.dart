@@ -24,6 +24,7 @@ import '../services/app_config.dart';
 import '../services/backend_event_draft_generator.dart';
 import '../services/supabase_auth_service.dart';
 import '../services/supabase_sync.dart';
+import '../services/task_image_service.dart';
 
 /// Everything the UI depends on, wired in one place.
 ///
@@ -44,6 +45,9 @@ class AppServices {
   /// Server errors to show to the user (null when there is none).
   final ValueNotifier<String?> errors;
 
+  /// Custom activity photos (Supabase Storage); null in the offline demo.
+  final ActivityPhotos? photos;
+
   AppServices({
     required this.clock,
     required this.auth,
@@ -55,6 +59,7 @@ class AppServices {
     required this.aiDrafts,
     ProgressStore? progress,
     ValueNotifier<String?>? errors,
+    this.photos,
   }) : progress = progress ?? ProgressStore(),
        errors = errors ?? ValueNotifier(null);
 
@@ -144,6 +149,7 @@ class AppServices {
       support: SupabaseSupportStore(db),
       progress: SupabaseProgressStore(db),
       library: library,
+      images: TaskImageService(db),
     );
     final schedule = ScheduleStore(
       repository: sync,
@@ -175,6 +181,7 @@ class AppServices {
       ),
       progress: sync.progress,
       errors: sync.errors,
+      photos: sync,
     );
   }
 
