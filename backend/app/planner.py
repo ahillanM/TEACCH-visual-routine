@@ -81,14 +81,19 @@ class OpenRouterPlanner:
                 parse_llm_output(raw)
                 return raw, model
             except (httpx.HTTPError, ValueError, ValidationError, KeyError, IndexError, TypeError) as e:
-                failures.append(f"{model}: {type(e).__name__}")  # never include prompt/response text
+                # never include prompt/response text; the HTTP status (e.g. 429) is safe and useful
+                status = getattr(getattr(e, "response", None), "status_code", None)
+                failures.append(f"{model}: {type(e).__name__}" + (f" {status}" if status else ""))
         raise ServiceError("planner_failed",
                            "No model returned a usable routine. " + "; ".join(failures), 502)
 
     async def _call(self, model: str, prompt: str) -> dict:
         # Single user message: some open models/providers reject the system role.
-        body = {"model": model, "temperature": 0, "max_tokens": 1500,
-                "response_format": {"type": "json_object"},
+        # Nemotron (live test 2026-10-29): with reasoning on, answers took ~45 s or ran out of
+        # tokens; with response_format, Lightning looped. Reasoning off + prompt-only JSON gave
+        # valid output from both models in ~4 s. Output is validated deterministically anyway.
+        body = {"model": model, "temperature": 0, "max_tokens": 2000,
+                "reasoning": {"enabled": False},
                 "messages": [{"role": "user", "content": prompt}]}
         headers = {"Authorization": f"Bearer {self.s.openrouter_api_key}",
                    "X-Title": "Caritas Routine Planner"}

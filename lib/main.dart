@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'app/planner_app.dart';
 import 'models/schedule_item.dart';
 import 'screens_participant/participant_home.dart';
 import 'screens_staff/staff_dashboard.dart';
 
+/// Runs the MVP (login → role-aware participant / staff interface).
+/// The original demo below ([TeacchPlannerApp]) is kept for reference.
 void main() {
-  runApp(const TeacchPlannerApp());
+  runApp(const PlannerApp());
 }
 
 class TeacchPlannerApp extends StatelessWidget {
