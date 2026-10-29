@@ -2,6 +2,7 @@
 import re
 import uuid
 from datetime import date as Date
+from datetime import timedelta
 
 from pydantic import BaseModel, Field
 
@@ -95,8 +96,33 @@ def _existing_times(e: ExistingItem):
     return s, en, d, (bad_s or bad_e or bad_d)
 
 
-def build_proposal(raw: dict, req: GenerateRoutineRequest, source: str, model: str) -> RoutineProposal:
-    """raw must already satisfy parse_llm_output."""
+# LLMs get weekday arithmetic wrong (observed: "Saturday" resolved to a Sunday), so a single
+# weekday named in the instruction is resolved deterministically.
+WEEKDAYS = {"monday": 0, "montag": 0, "tuesday": 1, "dienstag": 1, "wednesday": 2, "mittwoch": 2,
+            "thursday": 3, "donnerstag": 3, "friday": 4, "freitag": 4, "saturday": 5, "samstag": 5,
+            "sonnabend": 5, "sunday": 6, "sonntag": 6}
+
+
+def _named_weekday(text: str) -> int | None:
+    found = {WEEKDAYS[w] for w in re.findall(r"[a-zäöüß]+", text.lower()) if w in WEEKDAYS}
+    return found.pop() if len(found) == 1 else None
+
+
+def _fix_weekday(items, instruction: str, today: Date | None, add) -> None:
+    wd = _named_weekday(instruction)
+    if wd is None or today is None:
+        return
+    target = (today + timedelta(days=(wd - today.weekday()) % 7)).isoformat()
+    for i, it in enumerate(items):
+        if it.date is None or Date.fromisoformat(it.date).weekday() != wd:
+            if it.date is not None:
+                add("info", "date_corrected", f"Date corrected to the named weekday ({target}).", i)
+            it.date = target
+
+
+def build_proposal(raw: dict, req: GenerateRoutineRequest, source: str, model: str,
+                   today: Date | None = None) -> RoutineProposal:
+    """raw must already satisfy parse_llm_output. [today] enables weekday correction."""
     out = parse_llm_output(raw)
     issues: list[Issue] = []
 
@@ -168,6 +194,7 @@ def build_proposal(raw: dict, req: GenerateRoutineRequest, source: str, model: s
             pictogramKeyword=(it.pictogramKeyword or "").strip()[:40] or None,
             createdByStaff=req.requesterRole == "staff", subSteps=sub_out))
 
+    _fix_weekday(items, req.instruction, today, add)
     _check_duplicates(items, add)
     _check_order(items, add)
     _check_overlaps(items, add)

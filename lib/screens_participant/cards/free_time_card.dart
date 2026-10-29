@@ -17,11 +17,15 @@ class FreeTimeCard extends StatelessWidget {
   final DateTime now;
   final bool isImmediateNext;
 
+  /// Opens "Plan my free time" for this slot.
+  final VoidCallback? onPlan;
+
   const FreeTimeCard({
     super.key,
     required this.entry,
     required this.now,
     this.isImmediateNext = false,
+    this.onPlan,
   });
 
   static const _visual = VisualRef.arasaac('free', 11653);
@@ -39,6 +43,7 @@ class FreeTimeCard extends StatelessWidget {
       categoryIcon: style.icon,
       categoryLabel: style.label,
       isImmediateNext: isImmediateNext,
+      onTap: onPlan,
       semanticSummary: 'Free time. $timeText. Nothing is required.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -63,6 +68,14 @@ class FreeTimeCard extends StatelessWidget {
             'Nothing is required right now.',
             style: TextStyle(fontSize: 17, color: context.palette.textSecondary),
           ),
+          if (onPlan != null) ...[
+            const SizedBox(height: AppSpace.md),
+            OutlinedButton.icon(
+              onPressed: onPlan,
+              icon: const Icon(Icons.edit_calendar_rounded),
+              label: const Text('Plan this free time'),
+            ),
+          ],
           if (entry.isNow) ...[
             const SizedBox(height: AppSpace.lg),
             TimeProgress(

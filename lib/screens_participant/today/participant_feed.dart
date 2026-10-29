@@ -15,12 +15,14 @@ class ParticipantFeed extends StatefulWidget {
   final DateTime now;
   final void Function(FeedEntry entry)? onOpenDetails;
   final VoidCallback? onShowChanges;
+  final void Function(FeedEntry entry)? onPlanFreeTime;
 
   const ParticipantFeed({
     super.key,
     required this.entries,
     required this.now,
     this.onOpenDetails,
+    this.onPlanFreeTime,
     this.onShowChanges,
   });
 
@@ -117,6 +119,7 @@ class ParticipantFeedState extends State<ParticipantFeed> {
                   isImmediateNext: nowIndex >= 0 && i == nowIndex + 1,
                   onOpenDetails: widget.onOpenDetails,
                   onShowChanges: widget.onShowChanges,
+                  onPlanFreeTime: widget.onPlanFreeTime,
                 ),
               ),
           ],

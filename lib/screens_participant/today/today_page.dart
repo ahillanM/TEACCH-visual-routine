@@ -7,6 +7,7 @@ import '../../core/models/support_request.dart';
 import '../changes/change_history_sheet.dart';
 import '../changes/change_notice_page.dart';
 import '../details/task_details_page.dart';
+import '../plan/plan_free_time_page.dart';
 import 'participant_feed.dart';
 import 'participant_today_view.dart';
 
@@ -84,6 +85,17 @@ class _TodayPageState extends State<TodayPage> {
           onOpenChanges: () => _openChanges(day),
           onOpenDetails: _openDetails,
           onShowChanges: _showHistory,
+          onPlanFreeTime: services.freeTime == null
+              ? null
+              : (entry) {
+                  final now = services.clock.now();
+                  openFreeTimePlanner(
+                    context,
+                    date: now,
+                    slotStart: entry.start.isAfter(now) ? entry.start : now,
+                    slotEnd: entry.end,
+                  );
+                },
         );
       },
     );

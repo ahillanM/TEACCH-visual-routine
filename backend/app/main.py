@@ -60,9 +60,10 @@ async def _plan(req: GenerateRoutineRequest, source: str, s: Settings, planner) 
     if len(req.instruction) > s.max_instruction_chars:
         raise HTTPException(413, {"code": "instruction_too_long",
                                   "message": f"Max {s.max_instruction_chars} characters."})
-    raw, model = await planner.plan(req.instruction, _today(s, req.referenceDate))
+    today = _today(s, req.referenceDate)
+    raw, model = await planner.plan(req.instruction, today)
     try:
-        return build_proposal(raw, req, source, model)
+        return build_proposal(raw, req, source, model, today)
     except ValidationError:
         raise ServiceError("invalid_model_output", "Model output failed validation.", 502)
 

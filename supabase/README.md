@@ -112,6 +112,23 @@ photos?.hasPhoto(e.id, pid);
 
 Live tests: `flutter test test/integration/live_task_photos_test.dart`.
 
+## Participant free-time planning ("Plan my free time")
+Participants may add **their own** activities, but only in genuinely free time. Official staff activities can never be changed, moved or deleted by them. Everything is enforced in Postgres.
+
+- **`personal_activities` is a separate table, not rows in `activities`.** `save_schedule` replaces staff days and publishing rejects overlaps, so mixing the two would wipe participant rows or block staff. The table itself marks the origin. Participants have **no write grant on any table** here; the only way in is the RPC below, which takes the participant from `auth.uid()`. Saved personal activities are read-only for participants (completion only, via `complete_personal_activity`). Assigned staff may read and delete them.
+- **What counts as busy:** official activities in **any** status (staff drafts show as "Reserved by staff"), personal activities, and `unavailable_periods` (staff-defined; a period without times covers the whole day). The planning window comes from `planning_settings` (07:00–22:00, up to 30 days ahead, max 15 items). For today, planning starts at the current time.
+- **Conservative rules.** An official activity **without a time** blocks the whole day ("ask staff"). One with a start but no end blocks until the next official start, or the end of the window. Weekends are not assumed to be free.
+- **RPCs:**
+  - `get_planning_day(p_date, p_participant_id?)` → `{windowStart, windowEnd, earliestStart, blocked, blockedReason, busy:[{start,end,kind,title,timeUnknown}]}`. Callable by the participant for themselves, or by assigned staff.
+  - `save_personal_free_time_plan(p_date, p_activities:[{title,startTime,endTime,iconKey?,pictogramUrl?}])` → all rows or nothing. On a conflict it raises `plan_conflict`, with `details` = `[{index, reason, kind?, with?}]`. It also raises `day_not_plannable` (`details` = the reason) and `date_out_of_range`.
+  - It holds a per-participant-per-day advisory lock that `save_schedule` also takes, so concurrent writes are serialised and checked again.
+- **Staff precedence:** staff can still publish over a participant's plan. The plan stays visible and staff can remove it. The app refuses staff *edits* of personal plans.
+- **Flutter:**
+  - `AppScope.of(context).freeTime` (`FreeTimePlanner`, null in mock mode) provides `loadDay` / `suggest` / `save`.
+  - The deterministic rules are in `lib/core/logic/free_time.dart` (`FreeTimeRules`), and they mirror the server.
+  - Personal activities load as `ScheduledEvent(isPersonal: true)`, with ids `personal-<uuid>`, labelled "My plan".
+- Live tests: `flutter test test/integration/live_free_time_test.dart`.
+
 ## Security design (short)
 - Roles exist only in `public.profiles`, written by admins/service role; clients have no insert/update on it. A signup with `role: staff` metadata gets no profile → sees nothing (tested).
 - Client write grants are column-level: nobody can write `status`, `completed_at`, audit tables, attendance or events directly. Those change only via the RPCs above, which check the caller.

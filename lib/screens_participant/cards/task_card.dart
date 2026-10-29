@@ -48,7 +48,8 @@ class TaskCard extends StatelessWidget {
       entry: entry,
       accent: style.color,
       categoryIcon: style.icon,
-      categoryLabel: style.label,
+      // Participant's own plan: same visuals, clearly labelled.
+      categoryLabel: event.isPersonal ? 'My plan' : style.label,
       isImmediateNext: isImmediateNext,
       onTap: onTap,
       semanticSummary: [

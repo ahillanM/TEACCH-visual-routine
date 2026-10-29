@@ -17,6 +17,10 @@ class ParticipantTodayView extends StatelessWidget {
   final void Function(FeedEntry entry)? onOpenDetails;
   final VoidCallback? onShowChanges;
 
+  /// Participant only (null in staff preview): plan free time, optionally
+  /// for the tapped free-time / end-of-day entry.
+  final void Function(FeedEntry entry)? onPlanFreeTime;
+
   const ParticipantTodayView({
     super.key,
     required this.day,
@@ -24,6 +28,7 @@ class ParticipantTodayView extends StatelessWidget {
     this.onOpenChanges,
     this.onOpenDetails,
     this.onShowChanges,
+    this.onPlanFreeTime,
   });
 
   @override
@@ -48,6 +53,7 @@ class ParticipantTodayView extends StatelessWidget {
             now: day.now,
             onOpenDetails: onOpenDetails,
             onShowChanges: onShowChanges,
+            onPlanFreeTime: onPlanFreeTime,
           ),
         ),
       ],

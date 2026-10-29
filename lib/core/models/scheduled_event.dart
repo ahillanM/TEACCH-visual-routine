@@ -38,6 +38,11 @@ class ScheduledEvent {
   /// Set when this event was created to replace a cancelled one.
   final String? replacesEventId;
 
+  /// Created by the participant in their free time ("My plan"), not by
+  /// staff. Stored separately on the server and never part of staff
+  /// schedule writes.
+  final bool isPersonal;
+
   const ScheduledEvent({
     required this.id,
     required this.title,
@@ -56,6 +61,7 @@ class ScheduledEvent {
     this.planBActivityId,
     this.reminderMinutesBefore,
     this.replacesEventId,
+    this.isPersonal = false,
   });
 
   bool get isCancelled => status == EventStatus.cancelled;
@@ -89,6 +95,7 @@ class ScheduledEvent {
     String? planBActivityId,
     int? reminderMinutesBefore,
     String? replacesEventId,
+    bool? isPersonal,
     bool clearPlace = false,
     bool clearContact = false,
   }) {
@@ -112,6 +119,7 @@ class ScheduledEvent {
       reminderMinutesBefore:
           reminderMinutesBefore ?? this.reminderMinutesBefore,
       replacesEventId: replacesEventId ?? this.replacesEventId,
+      isPersonal: isPersonal ?? this.isPersonal,
     );
   }
 }

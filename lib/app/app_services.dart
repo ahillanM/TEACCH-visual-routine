@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 import '../core/ai/event_draft_generator.dart';
 import '../core/auth/auth_controller.dart';
 import '../core/auth/auth_service.dart';
+import '../core/planning/free_time_planner.dart';
 import '../core/data/mock_library.dart';
 import '../core/data/mock_participants.dart';
 import '../core/data/mock_routines.dart';
@@ -23,6 +24,7 @@ import '../core/time/time_format.dart';
 import '../services/app_config.dart';
 import '../services/backend_event_draft_generator.dart';
 import '../services/speech_input.dart';
+import '../services/supabase_free_time_planner.dart';
 import '../services/supabase_auth_service.dart';
 import '../services/supabase_sync.dart';
 import '../services/task_image_service.dart';
@@ -52,6 +54,9 @@ class AppServices {
   /// Custom activity photos (Supabase Storage); null in the offline demo.
   final ActivityPhotos? photos;
 
+  /// Participant "Plan my free time"; null hides the feature (offline demo).
+  final FreeTimePlanner? freeTime;
+
   AppServices({
     required this.clock,
     required this.auth,
@@ -65,6 +70,7 @@ class AppServices {
     ValueNotifier<String?>? errors,
     SpeechInput? speech,
     this.photos,
+    this.freeTime,
   }) : progress = progress ?? ProgressStore(),
        errors = errors ?? ValueNotifier(null),
        speech = speech ?? DeviceSpeechInput();
@@ -75,7 +81,11 @@ class AppServices {
   static const int demoStartMinute = 40;
 
   /// MOCK wiring with fictional demo data.
-  factory AppServices.demo({DemoClock? clock, SpeechInput? speech}) {
+  factory AppServices.demo({
+    DemoClock? clock,
+    SpeechInput? speech,
+    FreeTimePlanner? freeTime,
+  }) {
     final demoClock =
         clock ?? DemoClock(startHour: demoStartHour, startMinute: demoStartMinute);
     final today = TimeFormat.dateOnly(demoClock.now());
@@ -136,6 +146,7 @@ class AppServices {
       routines: RoutineStore(mockRoutines),
       aiDrafts: const MockEventDraftGenerator(),
       speech: speech,
+      freeTime: freeTime,
     );
   }
 
@@ -167,6 +178,10 @@ class AppServices {
       ),
     );
     sync.attach(schedule);
+    final ai = BackendEventDraftGenerator(
+      baseUrl: Uri.parse(AppConfig.aiBackendUrl),
+      apiKey: AppConfig.aiBackendApiKey,
+    );
 
     return AppServices(
       clock: DemoClock(),
@@ -182,13 +197,11 @@ class AppServices {
       support: sync.support,
       library: library,
       routines: RoutineStore(mockRoutines),
-      aiDrafts: BackendEventDraftGenerator(
-        baseUrl: Uri.parse(AppConfig.aiBackendUrl),
-        apiKey: AppConfig.aiBackendApiKey,
-      ),
+      aiDrafts: ai,
       progress: sync.progress,
       errors: sync.errors,
       photos: sync,
+      freeTime: SupabaseFreeTimePlanner(db: db, ai: ai, onSaved: sync.refresh),
     );
   }
 

@@ -8,6 +8,7 @@ import '../../widgets/activity_visual.dart';
 import '../../widgets/common.dart';
 import '../../widgets/status_badge.dart';
 import '../participant_presentation_scope.dart';
+import '../plan/plan_free_time_page.dart';
 
 /// A simple, visual overview of the week – one row per day. Read-only.
 class WeekPage extends StatelessWidget {
@@ -146,6 +147,12 @@ class _DayRow extends StatelessWidget {
   }
 
   void _openDay(BuildContext context) {
+    final canPlan = AppScope.of(context).freeTime != null && !isPast;
+    void plan(BuildContext sheet) {
+      Navigator.of(sheet).pop();
+      openFreeTimePlanner(context, date: day);
+    }
+
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -165,13 +172,26 @@ class _DayRow extends StatelessWidget {
                 const EmptyState(
                     icon: Icons.event_available_rounded,
                     title: 'Nothing planned'),
+              if (canPlan) ...[
+                SizedBox(
+                  height: kLargeTouchTarget,
+                  child: FilledButton.tonalIcon(
+                    key: const Key('plan-day'),
+                    onPressed: () => plan(context),
+                    icon: const Icon(Icons.edit_calendar_rounded),
+                    label: const Text('Plan my free time'),
+                  ),
+                ),
+                const SizedBox(height: AppSpace.md),
+              ],
               for (final e in events)
                 ListTile(
                   leading: Icon(CategoryStyle.of(e.category).icon,
                       color: CategoryStyle.of(e.category).color),
                   title: Text(e.title,
                       style: const TextStyle(fontWeight: FontWeight.w700)),
-                  subtitle: Text(TimeFormat.range(e.start, e.end)),
+                  subtitle: Text(TimeFormat.range(e.start, e.end) +
+                      (e.isPersonal ? ' · My plan' : '')),
                 ),
             ],
           ),

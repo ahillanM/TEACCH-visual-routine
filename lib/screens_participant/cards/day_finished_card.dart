@@ -9,7 +9,11 @@ class DayFinishedCard extends StatelessWidget {
   final FeedEntry entry;
   final VoidCallback? onShowChanges;
 
-  const DayFinishedCard({super.key, required this.entry, this.onShowChanges});
+  /// Opens "Plan my free time" for the rest of the day.
+  final VoidCallback? onPlan;
+
+  const DayFinishedCard(
+      {super.key, required this.entry, this.onShowChanges, this.onPlan});
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +40,14 @@ class DayFinishedCard extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 16, color: palette.textSecondary),
           ),
+          if (onPlan != null) ...[
+            const SizedBox(height: AppSpace.md),
+            FilledButton.tonalIcon(
+              onPressed: onPlan,
+              icon: const Icon(Icons.edit_calendar_rounded),
+              label: const Text('Plan my free time'),
+            ),
+          ],
           if (onShowChanges != null) ...[
             const SizedBox(height: AppSpace.md),
             TextButton.icon(

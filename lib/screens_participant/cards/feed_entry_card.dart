@@ -18,6 +18,10 @@ class FeedEntryCard extends StatelessWidget {
   final void Function(FeedEntry entry)? onOpenDetails;
   final VoidCallback? onShowChanges;
 
+  /// "Plan my free time" from a free-time or end-of-day card (participant
+  /// only; null in staff preview).
+  final void Function(FeedEntry entry)? onPlanFreeTime;
+
   const FeedEntryCard({
     super.key,
     required this.entry,
@@ -25,6 +29,7 @@ class FeedEntryCard extends StatelessWidget {
     this.isImmediateNext = false,
     this.onOpenDetails,
     this.onShowChanges,
+    this.onPlanFreeTime,
   });
 
   @override
@@ -32,6 +37,9 @@ class FeedEntryCard extends StatelessWidget {
     final open = onOpenDetails == null || entry.event == null
         ? null
         : () => onOpenDetails!(entry);
+    final plan = onPlanFreeTime == null || entry.isDone
+        ? null
+        : () => onPlanFreeTime!(entry);
 
     return switch (entry.kind) {
       FeedEntryKind.activity => TaskCard(
@@ -39,11 +47,11 @@ class FeedEntryCard extends StatelessWidget {
       FeedEntryKind.travelling => TravelCard(
           entry: entry, now: now, isImmediateNext: isImmediateNext, onTap: open),
       FeedEntryKind.freeTime => FreeTimeCard(
-          entry: entry, now: now, isImmediateNext: isImmediateNext),
+          entry: entry, now: now, isImmediateNext: isImmediateNext, onPlan: plan),
       FeedEntryKind.waiting || FeedEntryKind.preparing => WaitingCard(
           entry: entry, isImmediateNext: isImmediateNext, onTap: open),
       FeedEntryKind.dayFinished =>
-        DayFinishedCard(entry: entry, onShowChanges: onShowChanges),
+        DayFinishedCard(entry: entry, onShowChanges: onShowChanges, onPlan: plan),
     };
   }
 }

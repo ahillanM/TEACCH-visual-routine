@@ -202,22 +202,35 @@ class ScheduleStore extends ChangeNotifier {
     final byId = {for (final e in remote) e.id: e};
     final upserts = <ScheduledEvent>[
       for (final e in byId.values)
-        if (ChangeFactory.diff(published[e.id], e).isNotEmpty) e,
+        if (!e.isPersonal && ChangeFactory.diff(published[e.id], e).isNotEmpty)
+          e,
       for (final e in published.events.values)
-        if (e.isActive && window(e) && !byId.containsKey(e.id))
+        if (!e.isPersonal && e.isActive && window(e) && !byId.containsKey(e.id))
           e.copyWith(status: EventStatus.cancelled),
     ];
-    // Picture-only updates (new photo, refreshed photo link) are applied
-    // silently: they are not a schedule change for the participant.
-    final visualOnly = [
+    // Applied silently (no "plan changed" notice):
+    // * picture-only updates (new photo, refreshed photo link);
+    // * the participant's own "My plan" activities appearing or being
+    //   removed – they are not a change to the official schedule.
+    final silent = [
       for (final e in byId.values)
         if (published[e.id] case final before?)
-          if (ChangeFactory.diff(before, e).isEmpty &&
+          if (!e.isPersonal &&
+              ChangeFactory.diff(before, e).isEmpty &&
               !_sameVisual(before.visual, e.visual))
             before.copyWith(visual: e.visual),
+      for (final e in byId.values)
+        if (e.isPersonal &&
+            (published[e.id] == null ||
+                ChangeFactory.diff(published[e.id], e).isNotEmpty ||
+                !_sameVisual(published[e.id]!.visual, e.visual)))
+          e,
+      for (final e in published.events.values)
+        if (e.isPersonal && e.isActive && window(e) && !byId.containsKey(e.id))
+          e.copyWith(status: EventStatus.cancelled),
     ];
-    if (visualOnly.isNotEmpty) {
-      _history.add(published.applying(visualOnly, version: version + 1));
+    if (silent.isNotEmpty) {
+      _history.add(published.applying(silent, version: version + 1));
       if (upserts.isEmpty) notifyListeners();
     }
     if (upserts.isEmpty) return null;

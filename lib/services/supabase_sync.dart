@@ -119,7 +119,12 @@ class SupabaseSync implements ScheduleRepository, ActivityPhotos {
     }
 
     var channel = db.channel('planner-${_user!.id}');
-    for (final table in ['schedules', 'activities', 'support_requests']) {
+    for (final table in [
+      'schedules',
+      'activities',
+      'support_requests',
+      'personal_activities',
+    ]) {
       channel = channel.onPostgresChanges(
         event: PostgresChangeEvent.all,
         schema: 'public',
@@ -163,6 +168,9 @@ class SupabaseSync implements ScheduleRepository, ActivityPhotos {
   // ----------------------------------------------------------------- read
 
   final Map<String, String> _activityIds = {};
+
+  /// Personal activities as last loaded, by event id (`personal-{uuid}`).
+  final Map<String, ScheduledEvent> _serverPersonal = {};
 
   /// `activities.image_path` by "participantId/eventId" (published only).
   final Map<String, String> _imagePaths = {};
@@ -302,6 +310,42 @@ class SupabaseSync implements ScheduleRepository, ActivityPhotos {
       if (status == 'published') _serverGroups[key] = _signature(groupEvents);
     }
 
+    // Participant-created "My plan" activities (separate table, read-only
+    // here; never written through save_schedule).
+    _serverPersonal.clear();
+    try {
+      final personal = await db
+          .from('personal_activities')
+          .select('id, participant_id, activity_date, title, start_time, '
+              'end_time, icon_key, pictogram_url, status')
+          .gte('activity_date',
+              _date(today.subtract(const Duration(days: _daysBack))))
+          .lte('activity_date', _date(today.add(const Duration(days: _daysAhead))));
+      for (final a in personal) {
+        final pid = a['participant_id'] as String;
+        if (!known.contains(pid)) continue;
+        final day = DateTime.parse(a['activity_date'] as String);
+        final event = ScheduledEvent(
+          id: 'personal-${a['id']}',
+          title: a['title'] as String,
+          category: ActivityCategory.personal,
+          start: _at(day, a['start_time'] as String),
+          end: _at(day, a['end_time'] as String),
+          visual: VisualRef(
+            symbol: (a['icon_key'] as String?) ?? 'event',
+            pictogramUrl: a['pictogram_url'] as String?,
+          ),
+          assignedParticipantIds: {pid},
+          isPersonal: true,
+        );
+        published[event.id] = event;
+        _serverPersonal[event.id] = event;
+        if (a['status'] == 'completed') done.add((event.id, pid));
+      }
+    } catch (e) {
+      _report(e);
+    }
+
     progress.replaceAll(done);
     if (initial) {
       _store.replaceAll(published.values, drafts: drafts.values);
@@ -398,7 +442,23 @@ class SupabaseSync implements ScheduleRepository, ActivityPhotos {
     if (!_isStaff) return Future.value();
     final groups = <String, List<ScheduledEvent>>{};
     final known = participants.byId.keys.toSet();
+    final removePersonal = <String>[];
+    var editedPersonal = false;
     for (final e in snapshot.events.values) {
+      if (e.isPersonal) {
+        // Participant plans are never part of a staff schedule. Staff may
+        // remove one (cancel), but not edit it.
+        final server = _serverPersonal[e.id];
+        if (server == null) continue;
+        if (e.isCancelled) {
+          removePersonal.add(e.id.substring('personal-'.length));
+        } else if (e.start != server.start ||
+            e.end != server.end ||
+            e.title != server.title) {
+          editedPersonal = true;
+        }
+        continue;
+      }
       if (!e.isActive) continue;
       for (final pid in e.assignedParticipantIds.intersection(known)) {
         groups.putIfAbsent('$pid/${_date(e.start)}', () => []).add(e);
@@ -415,11 +475,26 @@ class SupabaseSync implements ScheduleRepository, ActivityPhotos {
             (_serverGroups[entry.key] ?? _signature(const [])))
           entry.key: entry.value,
     };
-    if (changed.isEmpty) return _queue;
+    if (editedPersonal) {
+      errors.value = 'Participants\' own plans can be removed, not edited.';
+    }
+    if (changed.isEmpty && removePersonal.isEmpty && !editedPersonal) {
+      return _queue;
+    }
 
     _queue = _queue.then((_) async {
       for (final entry in changed.entries) {
         await _writeGroup(entry.key, entry.value);
+      }
+      if (removePersonal.isNotEmpty) {
+        try {
+          await db
+              .from('personal_activities')
+              .delete()
+              .inFilter('id', removePersonal);
+        } catch (e) {
+          _report(e);
+        }
       }
       await _reload();
     });
@@ -546,13 +621,19 @@ class SupabaseProgressStore extends ProgressStore {
 
   @override
   Future<void> setDone(String eventId, String participantId, bool done) async {
-    final activityId = activityIdFor?.call(eventId, participantId);
+    const personalPrefix = 'personal-';
+    final personal = eventId.startsWith(personalPrefix);
+    final activityId = personal
+        ? eventId.substring(personalPrefix.length)
+        : activityIdFor?.call(eventId, participantId);
     if (activityId == null) return;
     await super.setDone(eventId, participantId, done);
     try {
       await db.rpc(
-        'complete_activity',
-        params: {'p_activity_id': activityId, 'p_done': done},
+        personal ? 'complete_personal_activity' : 'complete_activity',
+        params: personal
+            ? {'p_id': activityId, 'p_done': done}
+            : {'p_activity_id': activityId, 'p_done': done},
       );
     } catch (e) {
       await super.setDone(eventId, participantId, !done);
