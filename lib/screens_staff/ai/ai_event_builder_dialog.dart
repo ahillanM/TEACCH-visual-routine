@@ -79,10 +79,13 @@ class _AiBuilderState extends State<_AiBuilder> {
         ScheduledEvent(
           id: store.newId('evt'),
           title: p.title,
-          category: p.libraryMatch?.category ?? ActivityCategory.work,
+          category:
+              p.libraryMatch?.category ?? p.category ?? ActivityCategory.personal,
           start: p.start,
           end: p.end,
-          visual: p.libraryMatch?.visual ?? const VisualRef(symbol: 'event'),
+          visual: p.libraryMatch?.visual ??
+              p.visual ??
+              const VisualRef(symbol: 'event'),
           placeId: p.libraryMatch?.defaultPlaceId,
           contactId: p.libraryMatch?.defaultContactId,
           whatToBring: p.libraryMatch?.whatToBring ?? const [],

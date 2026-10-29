@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../core/ai/event_draft_generator.dart';
+import '../core/models/activity_category.dart';
 import '../core/models/library_items.dart';
+import '../core/models/visual_ref.dart';
 import '../core/time/time_format.dart';
 
 /// "Build with AI" through the FastAPI backend (`POST /ai/generate-routine`).
@@ -66,7 +68,7 @@ class BackendEventDraftGenerator implements EventDraftGenerator {
     final day =
         DateTime.tryParse((body['date'] as String?) ?? '') ??
         TimeFormat.dateOnly(today);
-    final proposals = <EventProposal>[];
+    final pending = <Future<EventProposal>>[];
     for (final item in (body['items'] as List? ?? const [])) {
       final m = item as Map<String, dynamic>;
       final startTime = m['startTime'] as String?;
@@ -88,15 +90,24 @@ class BackendEventDraftGenerator implements EventDraftGenerator {
       }
       final title = m['title'] as String;
       final match = _matchLibrary(title, library);
-      proposals.add(
-        EventProposal(
-          title: title,
-          start: start,
-          end: end,
-          libraryMatch: match,
+      final category = m['category'] is String
+          ? ActivityCategory.fromLegacyCode(m['category'] as String)
+          : null;
+      final keyword = (m['pictogramKeyword'] as String?)?.trim().toLowerCase();
+      pending.add(
+        (match != null ? Future.value(match.visual) : _visualFor(keyword)).then(
+          (visual) => EventProposal(
+            title: title,
+            start: start,
+            end: end,
+            libraryMatch: match,
+            category: category,
+            visual: visual,
+          ),
         ),
       );
     }
+    final proposals = await Future.wait(pending);
     if (proposals.isEmpty) {
       final issues = [
         for (final i in (body['issues'] as List? ?? const []))
@@ -108,6 +119,94 @@ class BackendEventDraftGenerator implements EventDraftGenerator {
     }
     proposals.sort((a, b) => a.start.compareTo(b.start));
     return proposals;
+  }
+
+  /// Icon key for the AI's pictogram keyword, plus an ARASAAC pictogram if the
+  /// public ARASAAC search finds one. Only the keyword is sent (no names or
+  /// ids); any failure falls back to the icon.
+  Future<VisualRef> _visualFor(String? keyword) async {
+    if (keyword == null || keyword.isEmpty) {
+      return const VisualRef(symbol: 'event');
+    }
+    final symbol = _symbolFor(keyword);
+    try {
+      final r = await _client
+          .get(
+            Uri.https('api.arasaac.org', '/v1/pictograms/en/search/$keyword'),
+          )
+          .timeout(_arasaacTimeout);
+      final list = r.statusCode == 200 ? jsonDecode(r.body) : null;
+      if (list is List && list.isNotEmpty && list.first['_id'] is int) {
+        return VisualRef.arasaac(symbol, list.first['_id'] as int);
+      }
+    } catch (_) {
+      // Offline or ARASAAC down: the icon is enough.
+    }
+    return VisualRef(symbol: symbol);
+  }
+
+  static const _arasaacTimeout = Duration(seconds: 4);
+
+  /// Keyword fragments → `SymbolIcons` keys.
+  static const _symbols = {
+    'teeth': 'teeth',
+    'tooth': 'teeth',
+    'brush': 'teeth',
+    'breakfast': 'breakfast',
+    'lunch': 'meal',
+    'dinner': 'meal',
+    'meal': 'meal',
+    'food': 'meal',
+    'eat': 'meal',
+    'snack': 'meal',
+    'bed': 'sleep',
+    'sleep': 'sleep',
+    'alarm': 'wake',
+    'wake': 'wake',
+    'shower': 'shower',
+    'wash': 'shower',
+    'bath': 'shower',
+    'cloth': 'dress',
+    'dress': 'dress',
+    'shirt': 'dress',
+    'wood': 'carpentry',
+    'carpent': 'carpentry',
+    'workshop': 'carpentry',
+    'tool': 'carpentry',
+    'metal': 'metal',
+    'machine': 'metal',
+    'book': 'study',
+    'study': 'study',
+    'homework': 'study',
+    'school': 'study',
+    'bus': 'bus',
+    'travel': 'bus',
+    'train': 'bus',
+    'kitchen': 'kitchen',
+    'cook': 'kitchen',
+    'sport': 'sport',
+    'football': 'sport',
+    'gym': 'sport',
+    'swim': 'sport',
+    'therap': 'therapy',
+    'physio': 'therapy',
+    'doctor': 'therapy',
+    'game': 'games',
+    'relax': 'relax',
+    'rest': 'relax',
+    'break': 'relax',
+    'garden': 'relax',
+    'meeting': 'meeting',
+    'group': 'meeting',
+    'office': 'office',
+    'computer': 'office',
+  };
+
+  static String _symbolFor(String keyword) {
+    for (final e in _symbols.entries) {
+      if (keyword.contains(e.key)) return e.value;
+    }
+    return 'event';
   }
 
   static Map<String, dynamic> _decode(String body) {

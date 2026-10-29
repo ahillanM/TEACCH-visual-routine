@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/app_scope.dart';
+import '../services/app_config.dart';
 import '../theme.dart';
 
 /// Username/password form. All auth logic lives in `AuthController`; this
@@ -237,9 +238,13 @@ class _DemoAccountsHint extends StatelessWidget {
           style: TextStyle(color: palette.textSecondary, fontSize: 14)),
       children: [
         Text(
-          'Staff: staff · Admin: admin\n'
-          'Participants: lena, jonas, mia, elias\n'
-          'Password for all: demo',
+          AppConfig.useMockData
+              ? 'Staff: staff · Admin: admin\n'
+                  'Participants: lena, jonas, mia, elias\n'
+                  'Password for all: demo'
+              : 'Staff: anna.weber.demo@example.com\n'
+                  'Participant: lukas.demo@example.com\n'
+                  'Password: ask the team lead (not stored in the app)',
           style: TextStyle(color: palette.textSecondary, height: 1.5),
         ),
       ],

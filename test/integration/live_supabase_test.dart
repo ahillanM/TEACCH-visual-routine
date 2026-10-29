@@ -40,6 +40,9 @@ String _password() {
   return f.existsSync() ? f.readAsStringSync().trim() : '';
 }
 
+String _iso(DateTime d) =>
+    '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
 /// One signed-in app instance (what one phone/browser would hold).
 class _Session {
   final SupabaseClient db;
@@ -104,6 +107,7 @@ void main() {
   final today = TimeFormat.dateOnly(DateTime.now());
   final dayA = today.add(const Duration(days: 12));
   final dayB = today.add(const Duration(days: 13));
+  final dayC = today.add(const Duration(days: 14));
   DateTime at(DateTime d, int h, [int m = 0]) =>
       DateTime(d.year, d.month, d.day, h, m);
 
@@ -121,15 +125,15 @@ void main() {
   tearDownAll(() async {
     if (skip != null) return;
     // Empty the test days again (leaves empty drafts, invisible to Lukas).
-    for (final d in [dayA, dayB]) {
-      final events = anna.store.published.eventsOn(d);
-      if (events.isEmpty) continue;
-      anna.store.publish(
-        upserts: [for (final e in events) e.copyWith(status: EventStatus.cancelled)],
-        publishedBy: 'test cleanup',
-      );
-    }
     await anna.sync.idle;
+    for (final d in [dayA, dayB, dayC]) {
+      await anna.db.rpc('save_schedule', params: {
+        'p_participant_id': _lukasId,
+        'p_schedule_date': _iso(d),
+        'p_activities': [],
+        'p_publish': true,
+      });
+    }
     await anna.close();
     await lukas.close();
     await jonas.close();
@@ -273,6 +277,68 @@ void main() {
       await eventually('Lukas sees the approved AI routine',
           () => lukas.eventsFor(_lukasId, dayB).length == proposals.length);
     }, timeout: const Timeout(Duration(minutes: 3)));
+
+    test('staff edit keeps sub-steps, untimed items, completion; is audited', () async {
+      final date = _iso(dayC);
+      // A day created outside the planner UI (like the seed / AI proposal).
+      await anna.db.rpc('save_schedule', params: {
+        'p_participant_id': _lukasId,
+        'p_schedule_date': date,
+        'p_activities': [
+          {
+            'title': 'Morning routine (test)',
+            'startTime': '07:00',
+            'endTime': '07:30',
+            'subSteps': [
+              {'title': 'Wash face'},
+              {'title': 'Brush teeth'},
+            ],
+          },
+          {'title': 'Untimed lunch (test)'},
+        ],
+        'p_publish': true,
+      });
+      await anna.sync.refresh();
+      await lukas.sync.refresh();
+      final morning = lukas.eventsFor(_lukasId, dayC).single;
+      await lukas.sync.progress.setDone(morning.id, _lukasId, true);
+      await anna.sync.refresh();
+      final before = DateTime.now().toUtc();
+
+      anna.store.publish(
+        upserts: [anna.eventsFor(_lukasId, dayC).single.copyWith(end: at(dayC, 7, 45))],
+        publishedBy: 'Anna',
+      );
+      await anna.sync.idle;
+
+      final rows = await anna.db
+          .from('schedules')
+          .select('id, status, activities(title, end_time, status, activity_steps(title))')
+          .eq('participant_id', _lukasId)
+          .eq('schedule_date', date)
+          .single();
+      expect(rows['status'], 'published');
+      final acts = (rows['activities'] as List).cast<Map<String, dynamic>>();
+      final m = acts.firstWhere((a) => a['title'] == 'Morning routine (test)');
+      expect(m['end_time'], '07:45:00');
+      expect(m['status'], 'completed');
+      expect((m['activity_steps'] as List).length, 2);
+      expect(acts.any((a) => a['title'] == 'Untimed lunch (test)'), isTrue);
+
+      final log = await anna.db
+          .from('schedule_changes')
+          .select('activity_id, new_values')
+          .eq('schedule_id', rows['id'] as String)
+          .gte('created_at', before.toIso8601String());
+      expect(log.where((r) => r['activity_id'] != null), isNotEmpty,
+          reason: 'the edited activity is in the audit log');
+      expect(
+          log.where((r) =>
+              r['activity_id'] == null &&
+              (r['new_values'] as Map?)?['status'] == 'draft'),
+          isEmpty,
+          reason: 'the day was never unpublished');
+    });
 
     test('13 unauthenticated and unauthorized access is blocked', () async {
       final anon = SupabaseClient(

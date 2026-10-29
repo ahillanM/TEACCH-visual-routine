@@ -27,9 +27,9 @@ import '../core/time/time_format.dart';
 ///
 /// * read: schedules + activities (RLS decides what the user may see), grouped
 ///   back into events by `activities.meta.eventId`;
-/// * write (staff publish): every changed participant/day is replaced through
-///   `save_schedule(..., p_publish: true)`, after `unpublish_schedule` if it
-///   was already published;
+/// * write (staff publish): every changed participant/day is saved in one
+///   atomic `save_schedule(..., p_publish: true)` call, which updates
+///   matching activities in place;
 /// * Realtime: any change to schedules, activities or support requests that
 ///   the user may see triggers a reload.
 ///
@@ -52,9 +52,6 @@ class SupabaseSync implements ScheduleRepository {
   RealtimeChannel? _channel;
   Timer? _debounce;
   Future<void> _queue = Future.value();
-
-  /// Server schedule rows by "participantId/yyyy-mm-dd".
-  final Map<String, ({String id, String status})> _schedules = {};
 
   /// Signature of each published participant/day on the server, to detect
   /// which groups a publish actually changed.
@@ -100,7 +97,6 @@ class SupabaseSync implements ScheduleRepository {
     if (channel != null) await db.removeChannel(channel);
     _user = null;
     support.user = null;
-    _schedules.clear();
     _serverGroups.clear();
     _activityIds.clear();
     _store.replaceAll(const []);
@@ -199,7 +195,6 @@ class SupabaseSync implements ScheduleRepository {
     final published = <String, ScheduledEvent>{};
     final drafts = <String, ScheduledEvent>{};
     final done = <(String, String)>[];
-    _schedules.clear();
     _serverGroups.clear();
     _activityIds.clear();
 
@@ -210,7 +205,6 @@ class SupabaseSync implements ScheduleRepository {
       final day = DateTime.parse(dateStr);
       final status = row['status'] as String;
       final key = '$pid/$dateStr';
-      _schedules[key] = (id: row['id'] as String, status: status);
       final target = status == 'published' ? published : drafts;
       final groupEvents = <ScheduledEvent>[];
 
@@ -359,20 +353,17 @@ class SupabaseSync implements ScheduleRepository {
       }
     }
     try {
-      final existing = _schedules[key];
-      if (existing?.status == 'published') {
-        await db.rpc(
-          'unpublish_schedule',
-          params: {'p_schedule_id': existing!.id},
-        );
-      }
+      // One atomic call: updates matching activities in place (keeping
+      // sub-steps, attendance and completion), keeps untimed activities the
+      // planner cannot show, and hides the day if nothing is left.
       await db.rpc(
         'save_schedule',
         params: {
           'p_participant_id': pid,
           'p_schedule_date': dateStr,
           'p_activities': [for (final e in sorted) _toItem(e)],
-          'p_publish': sorted.isNotEmpty,
+          'p_publish': true,
+          'p_keep_untimed': true,
         },
       );
     } catch (e) {

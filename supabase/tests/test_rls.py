@@ -155,9 +155,11 @@ def test_completion_persists_and_is_logged():
 
 def test_participant_cannot_complete_foreign_activity():
     mia_act = activity_id(Api(MIA), MIA, "Garden work")
-    r = Api(LUKAS).rpc("complete_activity", {"p_activity_id": mia_act})
-    assert denied(r)
-    assert Api(MIA).get("activities", id=f"eq.{mia_act}").json()[0]["status"] == "pending"
+    status = lambda: Api(MIA).get("activities", id=f"eq.{mia_act}").json()[0]["status"]  # noqa: E731
+    before = status()  # Mia may have completed it herself in the app
+    for done in (True, False):
+        assert denied(Api(LUKAS).rpc("complete_activity", {"p_activity_id": mia_act, "p_done": done}))
+    assert status() == before
     assert denied(Api(ANNA).rpc("complete_activity", {"p_activity_id": mia_act}))  # staff cannot impersonate
 
 

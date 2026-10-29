@@ -1,4 +1,6 @@
+import '../models/activity_category.dart';
 import '../models/library_items.dart';
+import '../models/visual_ref.dart';
 import '../time/time_format.dart';
 
 /// One activity proposed from free text. Always reviewed by staff before it
@@ -9,11 +11,17 @@ class EventProposal {
   final DateTime end;
   final LibraryActivity? libraryMatch;
 
+  /// Suggested by the generator; used when there is no [libraryMatch].
+  final ActivityCategory? category;
+  final VisualRef? visual;
+
   const EventProposal({
     required this.title,
     required this.start,
     required this.end,
     this.libraryMatch,
+    this.category,
+    this.visual,
   });
 
   EventProposal copyWith({String? title, DateTime? start, DateTime? end}) {
@@ -22,6 +30,8 @@ class EventProposal {
       start: start ?? this.start,
       end: end ?? this.end,
       libraryMatch: libraryMatch,
+      category: category,
+      visual: visual,
     );
   }
 }
