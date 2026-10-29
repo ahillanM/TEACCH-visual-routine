@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 import '../core/ai/event_draft_generator.dart';
 import '../core/auth/auth_controller.dart';
 import '../core/auth/auth_service.dart';
+import '../core/data/mock_groups.dart';
 import '../core/data/mock_library.dart';
 import '../core/data/mock_participants.dart';
 import '../core/data/mock_routines.dart';
@@ -11,6 +12,7 @@ import '../core/data/mock_schedules.dart';
 import '../core/logic/change_planner.dart';
 import '../core/models/schedule_snapshot.dart';
 import '../core/models/support_request.dart';
+import '../core/state/group_store.dart';
 import '../core/state/library_store.dart';
 import '../core/state/participant_directory.dart';
 import '../core/state/progress_store.dart';
@@ -41,6 +43,9 @@ class AppServices {
   final EventDraftGenerator aiDrafts;
   final ProgressStore progress;
 
+  /// Staff-made participant groups (local only, not synced yet).
+  final GroupStore groups;
+
   /// Server errors to show to the user (null when there is none).
   final ValueNotifier<String?> errors;
 
@@ -55,8 +60,10 @@ class AppServices {
     required this.aiDrafts,
     ProgressStore? progress,
     ValueNotifier<String?>? errors,
+    GroupStore? groups,
   }) : progress = progress ?? ProgressStore(),
-       errors = errors ?? ValueNotifier(null);
+       errors = errors ?? ValueNotifier(null),
+       groups = groups ?? GroupStore();
 
   /// Demo start time: during the morning workshop, so the core scenario
   /// (cancel workshop → free time) can be shown immediately.
@@ -124,6 +131,7 @@ class AppServices {
       ),
       routines: RoutineStore(mockRoutines),
       aiDrafts: const MockEventDraftGenerator(),
+      groups: GroupStore(mockGroups),
     );
   }
 
@@ -187,5 +195,6 @@ class AppServices {
     library.dispose();
     routines.dispose();
     progress.dispose();
+    groups.dispose();
   }
 }

@@ -60,7 +60,7 @@ class _SchedulePageState extends State<SchedulePage> {
                 FilledButton.icon(
                   onPressed: () => openActivityEditor(context, day: day),
                   icon: const Icon(Icons.add_rounded),
-                  label: const Text('Add manually'),
+                  label: const Text('Add Manually'),
                 ),
                 OutlinedButton.icon(
                   onPressed: () => showAiEventBuilder(context, day: day),
@@ -87,8 +87,8 @@ class _SchedulePageState extends State<SchedulePage> {
                 ),
                 IconButton(
                   tooltip: _view == ScheduleView.week
-                      ? 'Previous week'
-                      : 'Previous day',
+                      ? 'Previous Week'
+                      : 'Previous Day',
                   onPressed: () => _shift(-step),
                   icon: const Icon(Icons.chevron_left_rounded),
                 ),
@@ -97,7 +97,7 @@ class _SchedulePageState extends State<SchedulePage> {
                   child: const Text('Today'),
                 ),
                 IconButton(
-                  tooltip: _view == ScheduleView.week ? 'Next week' : 'Next day',
+                  tooltip: _view == ScheduleView.week ? 'Next Week' : 'Next Day',
                   onPressed: () => _shift(step),
                   icon: const Icon(Icons.chevron_right_rounded),
                 ),
@@ -174,7 +174,7 @@ class _DraftsBar extends StatelessWidget {
       message: 'Participants do not see drafts. $onDay on this day.',
       action: FilledButton(
         onPressed: onPublishDay,
-        child: const Text('Publish this day'),
+        child: const Text('Publish This Day'),
       ),
     );
   }
@@ -230,11 +230,11 @@ class _ParticipantView extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpace.sm),
             child: Row(children: [
-              Icon(Icons.warning_amber_rounded, color: palette.danger),
+              Icon(Icons.warning_amber_rounded, color: palette.conflict),
               const SizedBox(width: AppSpace.sm),
               Expanded(
                   child: Text('Conflict: ${c.message}',
-                      style: TextStyle(color: palette.danger))),
+                      style: TextStyle(color: palette.conflict))),
             ]),
           ),
         Card(
@@ -262,7 +262,7 @@ class _EventTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = CategoryStyle.of(event.category);
+    final style = CategoryStyle.of(event.category, context.palette);
     final library = AppScope.of(context).library;
     return ListTile(
       leading: Icon(event.isCancelled ? Icons.event_busy_rounded : style.icon,

@@ -15,6 +15,7 @@ class ParticipantFeed extends StatefulWidget {
   final DateTime now;
   final void Function(FeedEntry entry)? onOpenDetails;
   final VoidCallback? onShowChanges;
+  final void Function(FeedEntry entry)? onAddToFreeTime;
 
   const ParticipantFeed({
     super.key,
@@ -22,6 +23,7 @@ class ParticipantFeed extends StatefulWidget {
     required this.now,
     this.onOpenDetails,
     this.onShowChanges,
+    this.onAddToFreeTime,
   });
 
   @override
@@ -44,7 +46,9 @@ class ParticipantFeedState extends State<ParticipantFeed> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => scrollToNow(animate: false));
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => scrollToNow(animate: false),
+    );
   }
 
   @override
@@ -62,8 +66,7 @@ class ParticipantFeedState extends State<ParticipantFeed> {
     super.dispose();
   }
 
-  FeedEntry? get _nowEntry =>
-      widget.entries.where((e) => e.isNow).firstOrNull;
+  FeedEntry? get _nowEntry => widget.entries.where((e) => e.isNow).firstOrNull;
 
   bool get _userRecentlyScrolled {
     final last = _lastUserScroll;
@@ -81,7 +84,9 @@ class ParticipantFeedState extends State<ParticipantFeed> {
     Scrollable.ensureVisible(
       ctx,
       alignment: nowAlignment,
-      duration: animate ? AppMotion.of(context, AppMotion.scrollToNow) : Duration.zero,
+      duration: animate
+          ? AppMotion.of(context, AppMotion.scrollToNow)
+          : Duration.zero,
       curve: Curves.easeInOutCubic,
     );
   }
@@ -103,7 +108,11 @@ class ParticipantFeedState extends State<ParticipantFeed> {
       child: SingleChildScrollView(
         controller: _controller,
         padding: const EdgeInsets.fromLTRB(
-            AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.xxxl * 2),
+          AppSpace.lg,
+          AppSpace.sm,
+          AppSpace.lg,
+          AppSpace.xxxl * 2,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -117,6 +126,7 @@ class ParticipantFeedState extends State<ParticipantFeed> {
                   isImmediateNext: nowIndex >= 0 && i == nowIndex + 1,
                   onOpenDetails: widget.onOpenDetails,
                   onShowChanges: widget.onShowChanges,
+                  onAddToFreeTime: widget.onAddToFreeTime,
                 ),
               ),
           ],

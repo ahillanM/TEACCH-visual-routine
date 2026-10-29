@@ -48,6 +48,7 @@ class AdminTodayPage extends StatelessWidget {
                 e.isActive && e.start.isAfter(now) && e.whatToBring.isNotEmpty)
             .length;
         final user = services.auth.user;
+        final palette = context.palette;
 
         return ListView(
           padding: const EdgeInsets.all(AppSpace.xl),
@@ -56,7 +57,7 @@ class AdminTodayPage extends StatelessWidget {
               title: 'Good day${user == null ? '' : ', ${user.displayName}'}',
               subtitle: '${TimeFormat.longDate(now)} · ${TimeFormat.hm(now)}',
             ),
-            const SectionLabel('Needs attention'),
+            const SectionLabel('Needs Attention'),
             Wrap(
               spacing: AppSpace.md,
               runSpacing: AppSpace.md,
@@ -64,39 +65,44 @@ class AdminTodayPage extends StatelessWidget {
                 SummaryTile(
                   icon: Icons.support_agent_rounded,
                   value: '${services.support.openCount}',
-                  label: 'open support requests',
+                  label: 'Open support requests',
                   needsAttention: services.support.openCount > 0,
+                  tone: palette.work,
                 ),
                 SummaryTile(
                   icon: Icons.mark_chat_unread_outlined,
                   value: '$unacknowledged',
-                  label: 'participants have not seen a change yet',
+                  label: 'Participants have not seen a change yet',
                   needsAttention: unacknowledged > 0,
+                  tone: palette.change,
                 ),
                 SummaryTile(
                   icon: Icons.warning_amber_rounded,
                   value: '${conflicts.length}',
                   label: conflicts.length == 1
-                      ? 'unresolved conflict'
-                      : 'unresolved conflicts',
+                      ? 'Unresolved conflict'
+                      : 'Unresolved conflicts',
                   needsAttention: conflicts.isNotEmpty,
+                  tone: palette.travel,
                   onTap: () => onNavigate(scheduleIndex),
                 ),
                 SummaryTile(
                   icon: Icons.published_with_changes_rounded,
                   value: '$changesToday',
-                  label: 'schedule changes today',
+                  label: 'Schedule changes today',
+                  tone: palette.support,
                   onTap: () => onNavigate(scheduleIndex),
                 ),
                 SummaryTile(
                   icon: Icons.backpack_outlined,
                   value: '$preparation',
-                  label: 'activities need preparation',
+                  label: 'Activities need preparation',
+                  tone: palette.residential,
                 ),
                 SummaryTile(
                   icon: Icons.edit_note_rounded,
                   value: '${store.drafts.length}',
-                  label: 'unpublished drafts',
+                  label: 'Unpublished drafts',
                   needsAttention: store.drafts.isNotEmpty,
                   onTap: () => onNavigate(scheduleIndex),
                 ),

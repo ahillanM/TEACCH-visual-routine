@@ -29,6 +29,11 @@ abstract final class SymbolIcons {
     'free': Icons.spa_outlined,
     'waiting': Icons.hourglass_empty_rounded,
     'done': Icons.nights_stay_outlined,
+    'music': Icons.headphones_outlined,
+    'walk': Icons.directions_walk_outlined,
+    'phone': Icons.call_outlined,
+    'read': Icons.auto_stories_outlined,
+    'art': Icons.palette_outlined,
   };
 
   static IconData of(String symbol) => _icons[symbol] ?? Icons.event_outlined;

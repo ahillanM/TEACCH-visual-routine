@@ -7,6 +7,7 @@ import '../../core/models/support_request.dart';
 import '../changes/change_history_sheet.dart';
 import '../changes/change_notice_page.dart';
 import '../details/task_details_page.dart';
+import '../own_time/add_to_free_time.dart';
 import 'participant_feed.dart';
 import 'participant_today_view.dart';
 
@@ -32,10 +33,8 @@ class _TodayPageState extends State<TodayPage> {
   Future<void> _openChanges(ParticipantDay day) async {
     final result = await Navigator.of(context).push<ChangeNoticeResult>(
       MaterialPageRoute(
-        builder: (_) => ChangeNoticePage(
-          notice: day.notice,
-          changes: day.pendingChanges,
-        ),
+        builder: (_) =>
+            ChangeNoticePage(notice: day.notice, changes: day.pendingChanges),
       ),
     );
     if (!mounted) return;
@@ -44,7 +43,8 @@ class _TodayPageState extends State<TodayPage> {
         // Only now is the updated plan applied to the feed.
         AppScope.of(context).schedule.acknowledge(widget.participantId);
         WidgetsBinding.instance.addPostFrameCallback(
-            (_) => _feedKey.currentState?.scrollToNow());
+          (_) => _feedKey.currentState?.scrollToNow(),
+        );
       case ChangeNoticeResult.needHelp:
         widget.onNeedHelp(SupportReason.dontUnderstand);
       case null:
@@ -53,10 +53,21 @@ class _TodayPageState extends State<TodayPage> {
   }
 
   void _openDetails(FeedEntry entry) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => TaskDetailsPage(entry: entry)),
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => TaskDetailsPage(entry: entry)));
+  }
+
+  void _addToFreeTime(FeedEntry entry) {
+    final now = AppScope.of(context).clock.now();
+    showAddToFreeTime(
+      context,
+      participantId: widget.participantId,
+      from: entry.start,
+      until: entry.end ?? DateTime(now.year, now.month, now.day, _endOfDayHour),
     );
   }
+
+  static const int _endOfDayHour = 22;
 
   void _showHistory() {
     showModalBottomSheet<void>(
@@ -84,6 +95,7 @@ class _TodayPageState extends State<TodayPage> {
           onOpenChanges: () => _openChanges(day),
           onOpenDetails: _openDetails,
           onShowChanges: _showHistory,
+          onAddToFreeTime: _addToFreeTime,
         );
       },
     );

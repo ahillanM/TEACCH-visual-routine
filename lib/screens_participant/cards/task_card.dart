@@ -40,7 +40,7 @@ class TaskCard extends StatelessWidget {
     final event = entry.event!;
     final presentation = ParticipantPresentationScope.of(context);
     final library = AppScope.of(context).library;
-    final style = CategoryStyle.of(event.category);
+    final style = CategoryStyle.of(event.category, context.palette);
     final place = library.place(event.placeId);
     final contact = library.contact(event.contactId);
 
@@ -49,6 +49,7 @@ class TaskCard extends StatelessWidget {
       accent: style.color,
       categoryIcon: style.icon,
       categoryLabel: style.label,
+      taskColor: event.color,
       isImmediateNext: isImmediateNext,
       onTap: onTap,
       semanticSummary: [
@@ -109,23 +110,29 @@ class TaskCard extends StatelessWidget {
     final lines = <Widget>[
       if (p.showPlace && placeName != null)
         InfoLine(
-            icon: Icons.place_outlined, text: placeName, semanticPrefix: 'Place'),
+          icon: Icons.place_outlined,
+          text: placeName,
+          semanticPrefix: 'Place',
+        ),
       if (p.showPerson && contactName != null)
         InfoLine(
-            icon: Icons.person_outline_rounded,
-            text: contactName,
-            semanticPrefix: 'With'),
+          icon: Icons.person_outline_rounded,
+          text: contactName,
+          semanticPrefix: 'With',
+        ),
+      if (event.isParticipantOwned)
+        const InfoLine(icon: Icons.edit_note_rounded, text: 'You added this'),
       if (p.showWhatToBring && event.whatToBring.isNotEmpty)
         InfoLine(
-            icon: Icons.backpack_outlined,
-            text: 'Bring: ${event.whatToBring.join(', ')}',
-            semanticPrefix: 'What to bring'),
+          icon: Icons.backpack_outlined,
+          text: 'Bring: ${event.whatToBring.join(', ')}',
+          semanticPrefix: 'What to Bring',
+        ),
       if (p.showLeaveHint && !entry.isDone && !entry.isNow && placeName != null)
         InfoLine(
           icon: Icons.directions_walk_rounded,
-          text: 'Leave at ${TimeFormat.hm(event.start.subtract(
-            const Duration(minutes: CardPresentation.leaveEarlyMinutes),
-          ))}',
+          text:
+              'Leave at ${TimeFormat.hm(event.start.subtract(const Duration(minutes: CardPresentation.leaveEarlyMinutes)))}',
           semanticPrefix: 'When to leave',
         ),
     ];

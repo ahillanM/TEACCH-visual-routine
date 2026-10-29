@@ -23,11 +23,11 @@ class HelpPage extends StatelessWidget {
   });
 
   static IconData iconFor(SupportReason r) => switch (r) {
-        SupportReason.dontKnowWhereToGo => Icons.wrong_location_outlined,
-        SupportReason.dontUnderstand => Icons.help_outline_rounded,
-        SupportReason.scheduleWrong => Icons.event_busy_outlined,
-        SupportReason.needSupport => Icons.support_agent_rounded,
-      };
+    SupportReason.dontKnowWhereToGo => Icons.wrong_location_outlined,
+    SupportReason.dontUnderstand => Icons.help_outline_rounded,
+    SupportReason.scheduleWrong => Icons.event_busy_outlined,
+    SupportReason.needSupport => Icons.support_agent_rounded,
+  };
 
   Future<void> _request(BuildContext context, SupportReason reason) async {
     final confirmed = await showDialog<bool>(
@@ -79,13 +79,19 @@ class HelpPage extends StatelessWidget {
           children: [
             Semantics(
               header: true,
-              child: Text('Help',
-                  style: Theme.of(context).textTheme.headlineMedium),
+              child: Text(
+                'Help',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
             ),
             const SizedBox(height: AppSpace.xs),
-            Text('Choose what fits. Your support team will come to you.',
-                style: TextStyle(
-                    fontSize: 17, color: context.palette.textSecondary)),
+            Text(
+              'Choose what fits. Your support team will come to you.',
+              style: TextStyle(
+                fontSize: 17,
+                color: context.palette.textSecondary,
+              ),
+            ),
             const SizedBox(height: AppSpace.lg),
             if (mine.isNotEmpty) ...[
               for (final r in mine) _SentRequest(request: r),
@@ -143,13 +149,22 @@ class _HelpOption extends StatelessWidget {
               padding: const EdgeInsets.all(AppSpace.lg),
               child: Row(
                 children: [
-                  Icon(HelpPage.iconFor(reason), size: 36, color: palette.brand),
+                  Icon(
+                    HelpPage.iconFor(reason),
+                    size: 36,
+                    color: palette.brand,
+                  ),
                   const SizedBox(width: AppSpace.lg),
                   Expanded(
-                    child: Text(reason.label,
-                        style: Theme.of(context).textTheme.titleMedium),
+                    child: Text(
+                      reason.label,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                   ),
-                  Icon(Icons.chevron_right_rounded, color: palette.textSecondary),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: palette.textSecondary,
+                  ),
                 ],
               ),
             ),
@@ -179,8 +194,10 @@ class _SentRequest extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(seen ? Icons.directions_walk_rounded : Icons.send_rounded,
-                color: palette.brand),
+            Icon(
+              seen ? Icons.directions_walk_rounded : Icons.send_rounded,
+              color: palette.brand,
+            ),
             const SizedBox(width: AppSpace.md),
             Expanded(
               child: Column(
@@ -190,13 +207,17 @@ class _SentRequest extends StatelessWidget {
                     seen
                         ? 'Your support team has seen your message.'
                         : 'Your message was sent at '
-                            '${TimeFormat.hm(request.createdAt)}.',
+                              '${TimeFormat.hm(request.createdAt)}.',
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w700),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: AppSpace.xxs),
-                  Text(request.reason.label,
-                      style: TextStyle(color: palette.textSecondary)),
+                  Text(
+                    request.reason.label,
+                    style: TextStyle(color: palette.textSecondary),
+                  ),
                 ],
               ),
             ),

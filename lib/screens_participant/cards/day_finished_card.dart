@@ -18,12 +18,16 @@ class DayFinishedCard extends StatelessWidget {
       entry: entry,
       accent: palette.textSecondary,
       categoryIcon: Icons.nights_stay_outlined,
-      categoryLabel: 'End of day',
+      categoryLabel: 'End of Day',
       semanticSummary: "That's everything planned for today.",
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(Icons.nights_stay_outlined, size: 56, color: palette.textSecondary),
+          Icon(
+            Icons.nights_stay_outlined,
+            size: 56,
+            color: palette.textSecondary,
+          ),
           const SizedBox(height: AppSpace.md),
           Text(
             "That's everything planned for today.",

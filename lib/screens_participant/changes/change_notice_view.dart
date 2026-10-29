@@ -51,8 +51,8 @@ class _ChangeNoticeCard extends StatelessWidget {
         children: item.isCancellation
             ? _cancellation(context)
             : item.isAddition
-                ? _addition(context)
-                : _edit(context),
+            ? _addition(context)
+            : _edit(context),
       ),
     );
   }
@@ -117,30 +117,40 @@ class _ChangeNoticeCard extends StatelessWidget {
     final after = item.after ?? item.event;
     final lines = <Widget>[];
     if (item.aspects.contains(ChangeAspect.timeChanged) && before != null) {
-      lines.add(_Sentence(
-        icon: Icons.schedule_rounded,
-        text: 'New time: ${TimeFormat.range(after.start, after.end)} '
-            '(was ${TimeFormat.range(before.start, before.end)}).',
-      ));
+      lines.add(
+        _Sentence(
+          icon: Icons.schedule_rounded,
+          text:
+              'New time: ${TimeFormat.range(after.start, after.end)} '
+              '(was ${TimeFormat.range(before.start, before.end)}).',
+        ),
+      );
     }
     if (item.aspects.contains(ChangeAspect.locationChanged)) {
-      lines.add(_Sentence(
-        icon: Icons.place_outlined,
-        text: 'New place: ${library.placeName(after.placeId)}'
-            '${before == null ? '' : ' (was ${library.placeName(before.placeId)})'}.',
-      ));
+      lines.add(
+        _Sentence(
+          icon: Icons.place_outlined,
+          text:
+              'New place: ${library.placeName(after.placeId)}'
+              '${before == null ? '' : ' (was ${library.placeName(before.placeId)})'}.',
+        ),
+      );
     }
     if (item.aspects.contains(ChangeAspect.personChanged)) {
-      lines.add(_Sentence(
-        icon: Icons.person_outline_rounded,
-        text: 'New person: ${library.contactName(after.contactId)}.',
-      ));
+      lines.add(
+        _Sentence(
+          icon: Icons.person_outline_rounded,
+          text: 'New person: ${library.contactName(after.contactId)}.',
+        ),
+      );
     }
     if (lines.isEmpty) {
-      lines.add(const _Sentence(
-        icon: Icons.info_outline_rounded,
-        text: 'Some details of this activity changed.',
-      ));
+      lines.add(
+        const _Sentence(
+          icon: Icons.info_outline_rounded,
+          text: 'Some details of this activity changed.',
+        ),
+      );
     }
     return [
       _EventRow(
@@ -164,12 +174,16 @@ class _EventRow extends StatelessWidget {
   final Widget? badge;
   final bool struckThrough;
 
-  const _EventRow({required this.event, this.badge, this.struckThrough = false});
+  const _EventRow({
+    required this.event,
+    this.badge,
+    this.struckThrough = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final presentation = ParticipantPresentationScope.of(context);
-    final style = CategoryStyle.of(event.category);
+    final style = CategoryStyle.of(event.category, context.palette);
     final palette = context.palette;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,9 +210,8 @@ class _EventRow extends StatelessWidget {
               Text(
                 event.title,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      decoration:
-                          struckThrough ? TextDecoration.lineThrough : null,
-                    ),
+                  decoration: struckThrough ? TextDecoration.lineThrough : null,
+                ),
               ),
               Text(
                 TimeFormat.range(event.start, event.end),
@@ -218,7 +231,7 @@ class _FreeTimeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = CategoryStyle.of(ActivityCategory.freeTime);
+    final style = CategoryStyle.of(ActivityCategory.freeTime, context.palette);
     final palette = context.palette;
     return Row(
       children: [
@@ -236,13 +249,16 @@ class _FreeTimeRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Free time', style: Theme.of(context).textTheme.titleLarge),
+              Text('Free Time', style: Theme.of(context).textTheme.titleLarge),
               if (until != null)
-                Text('until ${TimeFormat.hm(until!)}',
-                    style:
-                        TextStyle(fontSize: 17, color: palette.textSecondary)),
-              Text('Nothing is required.',
-                  style: TextStyle(fontSize: 15, color: palette.textSecondary)),
+                Text(
+                  'until ${TimeFormat.hm(until!)}',
+                  style: TextStyle(fontSize: 17, color: palette.textSecondary),
+                ),
+              Text(
+                'Nothing is required.',
+                style: TextStyle(fontSize: 15, color: palette.textSecondary),
+              ),
             ],
           ),
         ),
@@ -257,13 +273,13 @@ class _Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(
-        text.toUpperCase(),
-        style: TextStyle(
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.8,
-          color: context.palette.textSecondary,
-        ),
-      );
+    text.toUpperCase(),
+    style: TextStyle(
+      fontWeight: FontWeight.w800,
+      letterSpacing: 0.8,
+      color: context.palette.textSecondary,
+    ),
+  );
 }
 
 class _Sentence extends StatelessWidget {
@@ -279,8 +295,10 @@ class _Sentence extends StatelessWidget {
         Icon(icon, color: context.palette.textPrimary),
         const SizedBox(width: AppSpace.sm),
         Expanded(
-          child: Text(text,
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+          ),
         ),
       ],
     );

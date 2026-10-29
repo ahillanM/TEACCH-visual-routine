@@ -165,6 +165,28 @@ class ScheduleStore extends ChangeNotifier {
     return change;
   }
 
+  /// Publishes activities a participant added to their own free time.
+  ///
+  /// The participant made this change themselves, so it never triggers a
+  /// "Your plan has changed" notice for them (unless staff changes are
+  /// already waiting, which they still need to see first).
+  ChangeEvent? addParticipantEvents({
+    required String participantId,
+    required String participantName,
+    required List<ScheduledEvent> events,
+  }) {
+    final wasUpToDate = pendingChangesFor(participantId).isEmpty;
+    final change = publish(
+      upserts: [
+        for (final e in events)
+          e.copyWith(assignedParticipantIds: {participantId}),
+      ],
+      publishedBy: '$participantName (self)',
+    );
+    if (change != null && wasUpToDate) acknowledge(participantId);
+    return change;
+  }
+
   // ---------------------------------------------------------------- remote
 
   /// Replaces everything with server state (after login / logout). Nothing

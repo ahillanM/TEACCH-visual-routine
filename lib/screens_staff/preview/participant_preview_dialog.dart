@@ -67,7 +67,7 @@ class _PreviewDialogBodyState extends State<_PreviewDialogBody> {
                     style: Theme.of(context).textTheme.titleLarge),
               ),
               IconButton(
-                tooltip: 'Close preview',
+                tooltip: 'Close Preview',
                 onPressed: () => Navigator.pop(context),
                 icon: const Icon(Icons.close_rounded),
               ),

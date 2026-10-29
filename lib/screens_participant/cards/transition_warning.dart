@@ -48,20 +48,23 @@ class TransitionWarning extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpace.md),
         decoration: BoxDecoration(
-          color: palette.surfaceMuted,
+          color: palette.accentSoft,
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Row(
           children: [
-            Icon(Icons.hourglass_bottom_rounded, color: palette.textPrimary),
+            Icon(Icons.hourglass_bottom_rounded, color: palette.accent),
             const SizedBox(width: AppSpace.sm),
             Expanded(
               child: Text(
                 next == null
                     ? 'About $minutes $unit left.'
                     : 'About $minutes $unit left. '
-                        'Then: ${next.title} at ${TimeFormat.hm(next.start)}.',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                          'Then: ${next.title} at ${TimeFormat.hm(next.start)}.',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],

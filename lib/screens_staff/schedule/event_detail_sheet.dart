@@ -64,7 +64,7 @@ class _EventDetailSheet extends StatelessWidget {
                 .toList()
               ..sort())
             .join(', ');
-        final style = CategoryStyle.of(event.category);
+        final style = CategoryStyle.of(event.category, context.palette);
 
         return SafeArea(
           child: SingleChildScrollView(
@@ -134,7 +134,7 @@ class _EventDetailSheet extends StatelessWidget {
                               event.assignedParticipantIds.toList()..sort(),
                         ),
                         icon: const Icon(Icons.phone_android_rounded),
-                        label: const Text('Preview as participant'),
+                        label: const Text('Preview as Participant'),
                       ),
                     if (isDraft) ...[
                       FilledButton.icon(
@@ -148,7 +148,7 @@ class _EventDetailSheet extends StatelessWidget {
                           showStaffMessage(context, 'Draft published.');
                         },
                         icon: const Icon(Icons.send_rounded),
-                        label: const Text('Publish draft'),
+                        label: const Text('Publish Draft'),
                       ),
                       TextButton.icon(
                         onPressed: () {
@@ -156,7 +156,7 @@ class _EventDetailSheet extends StatelessWidget {
                           Navigator.pop(context);
                         },
                         icon: const Icon(Icons.undo_rounded),
-                        label: const Text('Discard draft'),
+                        label: const Text('Discard Draft'),
                       ),
                     ],
                   ],

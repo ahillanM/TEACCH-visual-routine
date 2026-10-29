@@ -32,8 +32,10 @@ class ChangeHistorySheet extends StatelessWidget {
           controller: controller,
           padding: const EdgeInsets.all(AppSpace.lg),
           children: [
-            Text("Today's plan changes",
-                style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              "Today's plan changes",
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: AppSpace.lg),
             if (changes.isEmpty)
               const EmptyState(
@@ -42,8 +44,10 @@ class ChangeHistorySheet extends StatelessWidget {
                 message: 'Your plan is the same as it was planned.',
               ),
             for (final c in changes) ...[
-              Text('Changed at ${TimeFormat.hm(c.publishedAt)}',
-                  style: TextStyle(color: context.palette.textSecondary)),
+              Text(
+                'Changed at ${TimeFormat.hm(c.publishedAt)}',
+                style: TextStyle(color: context.palette.textSecondary),
+              ),
               const SizedBox(height: AppSpace.sm),
               ChangeNoticeView(
                 notice: ChangeNoticeBuilder.build(
