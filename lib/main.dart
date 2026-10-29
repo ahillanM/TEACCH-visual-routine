@@ -13,10 +13,11 @@ class TeacchPlannerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'BBW TEACCH Planner',
+      title: 'BBW Visual Routine',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2B6CB0)),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF5E9A82)),
+        scaffoldBackgroundColor: const Color(0xFFF5F3EF),
         useMaterial3: true,
       ),
       home: const DemoRoleSwitcher(),
@@ -42,20 +43,32 @@ class _DemoRoleSwitcherState extends State<DemoRoleSwitcher> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor:
-            isStaffMode ? Colors.blueGrey.shade900 : const Color(0xFF2B6CB0),
+        elevation: 0,
+        backgroundColor: isStaffMode
+            ? const Color(0xFF2D3748)
+            : const Color(0xFF4A7C66), // Calming Deep Sage
         foregroundColor: Colors.white,
-        title: Text(
-          isStaffMode
-              ? 'BBW Würzburg • Staff Dashboard'
-              : 'My Daily Plan (Lukas)',
+        title: Row(
+          children: [
+            Icon(
+              isStaffMode ? Icons.dashboard_customize_rounded : Icons.wb_twilight_rounded,
+              size: 22,
+            ),
+            const SizedBox(width: 10),
+            Text(
+              isStaffMode
+                  ? 'BBW Würzburg • Staff Dashboard'
+                  : 'Lukas\'s Visual Routine',
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+            ),
+          ],
         ),
         actions: [
           const Tooltip(
             message: 'TLS 1.3 Encrypted • EU-Central (Frankfurt) GDPR Compliant',
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 8.0),
-              child: Icon(Icons.verified_user, color: Colors.greenAccent, size: 20),
+              child: Icon(Icons.verified_user_rounded, color: Color(0xFFA7F3D0), size: 20),
             ),
           ),
           Row(
@@ -63,7 +76,7 @@ class _DemoRoleSwitcherState extends State<DemoRoleSwitcher> {
               const Text('Participant', style: TextStyle(fontSize: 12)),
               Switch(
                 value: isStaffMode,
-                activeThumbColor: Colors.amber,
+                activeThumbColor: const Color(0xFFF6AD55),
                 onChanged: (val) => setState(() => isStaffMode = val),
               ),
               const Padding(

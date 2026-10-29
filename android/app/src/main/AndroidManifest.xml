@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- ADD THIS LINE SO AI & PICTOGRAMS WORK IN THE APK -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
         android:label="bbw_visual_routine"
         android:name="${applicationName}"

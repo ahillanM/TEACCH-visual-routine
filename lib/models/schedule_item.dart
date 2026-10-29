@@ -20,7 +20,7 @@ class ScheduleItem {
   final String id;
   final String title;
   final String category; // 'BBW_TRAINING', 'RESIDENTIAL', 'BREAK', 'PERSONAL'
-  final int colorHex;    // TEACCH color coding
+  final int colorHex;    // Calming TEACCH color coding
   final String timeRange;
   String locationName;
   String staffName;
@@ -46,13 +46,18 @@ class ScheduleItem {
   });
 }
 
-// Initial Mock Schedule for Lukas (BBW Würzburg)
+// Calming TEACCH Palette Constants
+// Sky Slate (Training): 0xFF5B8FB9
+// Warm Apricot (Break): 0xFFD98A56
+// Soft Sage (Residential): 0xFF5E9A82
+// Muted Lavender (Personal/AI): 0xFF8875B8
+
 final List<ScheduleItem> mockSchedule = [
   ScheduleItem(
     id: '1',
     title: 'Metal Workshop: Milling',
     category: 'BBW_TRAINING',
-    colorHex: 0xFF2B6CB0, // Blue = Vocational Training
+    colorHex: 0xFF5B8FB9, // Calming Sky Blue
     timeRange: '08:00 - 10:00',
     locationName: 'Workshop Hall B',
     staffName: 'Mr. Weber',
@@ -68,13 +73,13 @@ final List<ScheduleItem> mockSchedule = [
     id: '2',
     title: 'Lunch Break',
     category: 'BREAK',
-    colorHex: 0xFFDD6B20, // Orange = Break / Meal
+    colorHex: 0xFFD98A56, // Warm Apricot
     timeRange: '12:00 - 13:00',
     locationName: 'BBW Dining Hall',
     staffName: 'Independent',
     pictogramUrl: 'https://static.arasaac.org/pictograms/2349/2349_500.png',
     subSteps: [
-      SubStep(title: 'Wash hands', durationMin: 3, isDone: false),
+      SubStep(title: 'Wash hands calmly', durationMin: 3, isDone: false),
       SubStep(title: 'Pick up tray & eat lunch', durationMin: 30, isDone: false),
     ],
   ),
@@ -82,28 +87,27 @@ final List<ScheduleItem> mockSchedule = [
     id: '3',
     title: 'Residential Group: Study & Dinner',
     category: 'RESIDENTIAL',
-    colorHex: 0xFF2F855A, // Green = Residential Facility
+    colorHex: 0xFF5E9A82, // Soothing Sage Green
     timeRange: '17:00 - 19:00',
     locationName: 'Residential Group St. Josef',
     staffName: 'Ms. Schmidt (Substitute)',
     pictogramUrl: 'https://static.arasaac.org/pictograms/6964/6964_500.png',
-    isModifiedAlert: true, // Highlights a calm schedule change alert
+    isModifiedAlert: true,
     subSteps: [
-      SubStep(title: 'Unpack backpack', durationMin: 5, isDone: false),
-      SubStep(title: '30 min study time', durationMin: 30, isDone: false),
+      SubStep(title: 'Unpack backpack in room', durationMin: 5, isDone: false),
+      SubStep(title: 'Quiet study time', durationMin: 30, isDone: false),
       SubStep(title: 'Group dinner', durationMin: 45, isDone: false),
     ],
   ),
 ];
 
-// Predefined Routine Modules for 1-Click Staff Assignment
 List<ScheduleItem> buildEveningResidentialModule() {
   return [
     ScheduleItem(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: 'Evening Residential Routine',
+      title: 'Evening Wind-Down Routine',
       category: 'RESIDENTIAL',
-      colorHex: 0xFF2F855A,
+      colorHex: 0xFF5E9A82,
       timeRange: '19:30 - 21:00',
       locationName: 'Residential Group St. Josef',
       staffName: 'Mr. Klein',
@@ -111,8 +115,8 @@ List<ScheduleItem> buildEveningResidentialModule() {
       createdByStaff: true,
       subSteps: [
         SubStep(title: 'Help tidy up the kitchen', durationMin: 15),
-        SubStep(title: 'Free time in common room', durationMin: 45),
-        SubStep(title: 'Brush teeth & get ready for bed', durationMin: 15),
+        SubStep(title: 'Relax in the common room', durationMin: 45),
+        SubStep(title: 'Brush teeth & get ready for sleep', durationMin: 15),
       ],
     ),
   ];
