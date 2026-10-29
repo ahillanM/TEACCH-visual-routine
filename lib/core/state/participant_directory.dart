@@ -29,6 +29,14 @@ class ParticipantDirectory extends ChangeNotifier {
         .toList();
   }
 
+  /// Replaces the directory, e.g. with the participants loaded after login.
+  void replaceAll(Iterable<Participant> participants) {
+    _participants
+      ..clear()
+      ..addAll({for (final p in participants) p.id: p});
+    notifyListeners();
+  }
+
   void updateProfile(String participantId, ParticipantProfile profile) {
     final p = _participants[participantId];
     if (p == null) return;

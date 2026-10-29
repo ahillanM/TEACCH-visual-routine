@@ -44,7 +44,7 @@ Only `instruction` is required. `referenceDate` = "today" for resolving relative
 ### Proposal response (`RoutineProposal`)
 ```json
 {"proposalId": "uuid", "status": "draft", "requiresApproval": true, "source": "text",
- "participantId": "demo-lukas", "date": "2026-10-30", "valid": true, "model": "google/gemma-4-31b-it:free",
+ "participantId": "demo-lukas", "date": "2026-10-30", "valid": true, "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
  "items": [{"id": "uuid", "title": "Wake up", "category": "PERSONAL", "colorHex": 8412884,
             "date": "2026-10-30", "startTime": "07:00", "endTime": null, "timeRange": "07:00",
             "locationName": "", "staffName": "", "pictogramUrl": "", "pictogramKeyword": "bed",
@@ -59,7 +59,7 @@ Only `instruction` is required. `referenceDate` = "today" for resolving relative
 - `requesterRole` is a client claim and sets only `createdByStaff`. Real authorisation comes with Supabase auth.
 
 ## Models (set by env, swap without code changes)
-Primary `google/gemma-4-31b-it:free` (open-weight Gemma; supports `response_format`), fallback `nvidia/nemotron-3.5-super-vl:free` (open-weight; supports structured outputs). Chosen from OpenRouter's live model list on 2026-10-29; **instruction-following quality is unverified until a live test**. Free tier: 20 req/min, 50 req/day (1000/day after buying 10 credits). Free endpoints can be unavailable or slow; the backend tries primary then fallback.
+Primary `nvidia/nemotron-3-ultra-550b-a55b:free` (open-weight NVIDIA Nemotron), fallback `nvidia/nemotron-3.5-lightning:free` (open-weight). Chosen by the team on 2026-10-29; **instruction-following quality is unverified until a live test**. Free tier: 20 req/min, 50 req/day (1000/day after buying 10 credits). Free endpoints can be unavailable or slow; the backend tries primary then fallback.
 
 ## Privacy (read before real data)
 Prototype = fictional participant data only. This is not GDPR compliance.

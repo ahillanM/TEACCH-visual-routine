@@ -47,6 +47,18 @@ class AuthController extends ChangeNotifier {
     }
   }
 
+  /// Signs the user of a saved session back in, if there is one.
+  Future<void> restoreSession() async {
+    try {
+      final restored = await _service.restoreSession();
+      if (restored == null || _user != null) return;
+      _user = restored;
+      notifyListeners();
+    } catch (_) {
+      // No usable session: the login page stays visible.
+    }
+  }
+
   Future<void> signOut() async {
     await _service.signOut();
     _user = null;

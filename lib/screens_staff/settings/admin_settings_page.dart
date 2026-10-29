@@ -91,13 +91,14 @@ class AdminSettingsPage extends StatelessWidget {
               children: [
                 InfoLine(
                     icon: Icons.info_outline_rounded,
-                    text: 'All data in this prototype is fictional and stays in '
-                        'memory on this device.'),
+                    text: 'Demo data is fictional. Schedules, progress and support '
+                        'requests are stored in Supabase (EU) over HTTPS.'),
                 SizedBox(height: AppSpace.xs),
                 InfoLine(
                     icon: Icons.shield_outlined,
-                    text: 'Role checks are enforced in the app only. Production '
-                        'requires server-side authorisation (e.g. Supabase RLS) '
+                    text: 'Access is enforced server-side by Supabase row-level '
+                        'security; the app only hides what users cannot use. Production '
+                        'still needs a privacy review, rotated demo passwords '
                         'and TLS for all traffic.'),
               ],
             ),

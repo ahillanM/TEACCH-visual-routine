@@ -13,6 +13,9 @@ class AuthException implements Exception {
 abstract class AuthService {
   Future<AppUser> signIn({required String username, required String password});
   Future<void> signOut();
+
+  /// The user of a saved session (e.g. after an app restart), or null.
+  Future<AppUser?> restoreSession();
 }
 
 /// MOCK: in-memory demo accounts. Not secure, for the prototype only.
@@ -42,4 +45,7 @@ class MockAuthService implements AuthService {
 
   @override
   Future<void> signOut() async {}
+
+  @override
+  Future<AppUser?> restoreSession() async => null;
 }

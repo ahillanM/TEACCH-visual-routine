@@ -118,6 +118,7 @@ class ScheduleStore extends ChangeNotifier {
     required String publishedBy,
     ChangeOutcome outcome = ChangeOutcome.none,
     String? cancelledEventId,
+    bool persist = true,
   }) {
     final base = published;
     final now = DateTime.now();
@@ -159,9 +160,54 @@ class ScheduleStore extends ChangeNotifier {
     );
     _history.add(next);
     _changes.add(change);
-    repository.savePublished(next);
+    if (persist) repository.savePublished(next);
     notifyListeners();
     return change;
+  }
+
+  // ---------------------------------------------------------------- remote
+
+  /// Replaces everything with server state (after login / logout). Nothing
+  /// is shown as a change; drafts are those stored on the server.
+  void replaceAll(
+    Iterable<ScheduledEvent> published, {
+    Iterable<ScheduledEvent> drafts = const [],
+  }) {
+    final next = ScheduleSnapshot(
+      version: version + 1,
+      publishedAt: DateTime.now(),
+      events: Map.unmodifiable({for (final e in published) e.id: e}),
+    );
+    _history
+      ..clear()
+      ..add(next);
+    _changes.clear();
+    _acknowledgedVersion.clear();
+    _drafts
+      ..clear()
+      ..addAll({for (final e in drafts) e.id: e});
+    notifyListeners();
+  }
+
+  /// Applies a newer server state as a regular published change, so
+  /// participants get the same "plan changed" flow as for local publishes.
+  /// [window] limits which local events are compared (the loaded date range);
+  /// active events missing from [remote] count as cancelled.
+  ChangeEvent? applyRemote(
+    Iterable<ScheduledEvent> remote, {
+    required bool Function(ScheduledEvent) window,
+    String publishedBy = 'Staff',
+  }) {
+    final byId = {for (final e in remote) e.id: e};
+    final upserts = <ScheduledEvent>[
+      for (final e in byId.values)
+        if (ChangeFactory.diff(published[e.id], e).isNotEmpty) e,
+      for (final e in published.events.values)
+        if (e.isActive && window(e) && !byId.containsKey(e.id))
+          e.copyWith(status: EventStatus.cancelled),
+    ];
+    if (upserts.isEmpty) return null;
+    return publish(upserts: upserts, publishedBy: publishedBy, persist: false);
   }
 
   /// Publishes all current drafts on [day] (or every draft if null).

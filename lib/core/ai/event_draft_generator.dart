@@ -26,6 +26,14 @@ class EventProposal {
   }
 }
 
+/// A generator failure with a message that can be shown to staff.
+class EventDraftException implements Exception {
+  final String message;
+  const EventDraftException(this.message);
+  @override
+  String toString() => message;
+}
+
 /// Boundary for "Build with AI". A real implementation (e.g. Gemini via the
 /// backend team's service) can replace the mock without touching the UI.
 abstract class EventDraftGenerator {

@@ -21,9 +21,25 @@ class PlannerApp extends StatefulWidget {
 
 class _PlannerAppState extends State<PlannerApp> {
   late final AppServices _services = widget.services ?? AppServices.demo();
+  final _messenger = GlobalKey<ScaffoldMessengerState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _services.errors.addListener(_showError);
+    _services.auth.restoreSession();
+  }
+
+  void _showError() {
+    final message = _services.errors.value;
+    if (message == null) return;
+    _messenger.currentState?.showSnackBar(SnackBar(content: Text(message)));
+    _services.errors.value = null;
+  }
 
   @override
   void dispose() {
+    _services.errors.removeListener(_showError);
     if (widget.services == null) _services.dispose();
     super.dispose();
   }
@@ -33,6 +49,7 @@ class _PlannerAppState extends State<PlannerApp> {
     return AppScope(
       services: _services,
       child: MaterialApp(
+        scaffoldMessengerKey: _messenger,
         title: 'BBW Visual Planner',
         debugShowCheckedModeBanner: false,
         theme: buildPlannerTheme(),

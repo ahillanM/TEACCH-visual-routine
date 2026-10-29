@@ -50,11 +50,20 @@ class _AiBuilderState extends State<_AiBuilder> {
   Future<void> _suggest() async {
     final services = AppScope.of(context);
     setState(() => _loading = true);
-    final result = await services.aiDrafts.propose(
-      _text.text,
-      today: widget.day,
-      library: services.library.activities,
-    );
+    final List<EventProposal> result;
+    try {
+      result = await services.aiDrafts.propose(
+        _text.text,
+        today: widget.day,
+        library: services.library.activities,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      showStaffMessage(context,
+          e is EventDraftException ? e.message : 'Suggestions failed. Please try again.');
+      return;
+    }
     if (!mounted) return;
     setState(() {
       _proposals = [for (var i = 0; i < result.length; i++) (i, result[i])];
@@ -116,8 +125,8 @@ class _AiBuilderState extends State<_AiBuilder> {
             ],
           ),
           Text(
-            'Prototype: a simple rule-based parser suggests activities. '
-            'No data leaves this device. You review everything before publishing.',
+            'Your text is sent to the AI service, which suggests activities. '
+            'Do not enter names or health details. Nothing is published until you review and publish it.',
             style: TextStyle(color: palette.textSecondary),
           ),
           const SizedBox(height: AppSpace.lg),

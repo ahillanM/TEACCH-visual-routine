@@ -38,6 +38,14 @@ class SupportRequestStore extends ChangeNotifier {
     return request;
   }
 
+  /// Replaces all requests, e.g. with the server state.
+  void replaceAll(Iterable<SupportRequest> requests) {
+    _requests
+      ..clear()
+      ..addAll(requests);
+    notifyListeners();
+  }
+
   void setStatus(String id, SupportStatus status) {
     final i = _requests.indexWhere((r) => r.id == id);
     if (i < 0) return;

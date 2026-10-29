@@ -1,3 +1,6 @@
+import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
+
 import '../core/ai/event_draft_generator.dart';
 import '../core/auth/auth_controller.dart';
 import '../core/auth/auth_service.dart';
@@ -10,12 +13,17 @@ import '../core/models/schedule_snapshot.dart';
 import '../core/models/support_request.dart';
 import '../core/state/library_store.dart';
 import '../core/state/participant_directory.dart';
+import '../core/state/progress_store.dart';
 import '../core/state/routine_store.dart';
 import '../core/state/schedule_repository.dart';
 import '../core/state/schedule_store.dart';
 import '../core/state/support_request_store.dart';
 import '../core/time/clock.dart';
 import '../core/time/time_format.dart';
+import '../services/app_config.dart';
+import '../services/backend_event_draft_generator.dart';
+import '../services/supabase_auth_service.dart';
+import '../services/supabase_sync.dart';
 
 /// Everything the UI depends on, wired in one place.
 ///
@@ -31,6 +39,10 @@ class AppServices {
   final LibraryStore library;
   final RoutineStore routines;
   final EventDraftGenerator aiDrafts;
+  final ProgressStore progress;
+
+  /// Server errors to show to the user (null when there is none).
+  final ValueNotifier<String?> errors;
 
   AppServices({
     required this.clock,
@@ -41,7 +53,10 @@ class AppServices {
     required this.library,
     required this.routines,
     required this.aiDrafts,
-  });
+    ProgressStore? progress,
+    ValueNotifier<String?>? errors,
+  }) : progress = progress ?? ProgressStore(),
+       errors = errors ?? ValueNotifier(null);
 
   /// Demo start time: during the morning workshop, so the core scenario
   /// (cancel workshop → free time) can be shown immediately.
@@ -112,6 +127,57 @@ class AppServices {
     );
   }
 
+  /// REAL wiring: Supabase auth + data (RLS-protected) and the FastAPI AI
+  /// backend. Requires `Supabase.initialize` first (see `main_mvp.dart`).
+  /// Library and routine templates are still local demo content.
+  factory AppServices.supabase() {
+    final db = Supabase.instance.client;
+    final library = LibraryStore(
+      activities: mockLibraryActivities,
+      places: mockPlaces,
+      contacts: mockContacts,
+    );
+    final participants = ParticipantDirectory(const []);
+    final sync = SupabaseSync(
+      db: db,
+      participants: participants,
+      support: SupabaseSupportStore(db),
+      progress: SupabaseProgressStore(db),
+      library: library,
+    );
+    final schedule = ScheduleStore(
+      repository: sync,
+      initial: ScheduleSnapshot(
+        version: 1,
+        publishedAt: DateTime.now(),
+        events: const {},
+      ),
+    );
+    sync.attach(schedule);
+
+    return AppServices(
+      clock: DemoClock(),
+      auth: AuthController(
+        SupabaseAuthService(
+          db: db,
+          onSignedIn: sync.start,
+          onSignedOut: sync.stop,
+        ),
+      ),
+      schedule: schedule,
+      participants: participants,
+      support: sync.support,
+      library: library,
+      routines: RoutineStore(mockRoutines),
+      aiDrafts: BackendEventDraftGenerator(
+        baseUrl: Uri.parse(AppConfig.aiBackendUrl),
+        apiKey: AppConfig.aiBackendApiKey,
+      ),
+      progress: sync.progress,
+      errors: sync.errors,
+    );
+  }
+
   void dispose() {
     clock.dispose();
     auth.dispose();
@@ -120,5 +186,6 @@ class AppServices {
     support.dispose();
     library.dispose();
     routines.dispose();
+    progress.dispose();
   }
 }

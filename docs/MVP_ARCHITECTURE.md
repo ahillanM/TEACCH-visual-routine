@@ -8,11 +8,34 @@ This document describes the MVP added on `feat/participant-ui`. It is built
 
 ## Running
 
+**Real backend (default).** `lib/main_mvp.dart` uses Supabase (auth, schedules,
+progress, support requests, Realtime) and the FastAPI AI backend:
+
 ```bash
+# 1. AI backend (once): put OPENROUTER_API_KEY=... into backend/.env (gitignored)
+cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+APP_ENV=dev .venv/bin/uvicorn app.main:app --port 8000
+# 2. App (another terminal, repo root)
 flutter run -d chrome -t lib/main_mvp.dart
+# Android emulator: add --dart-define=AI_BACKEND_URL=http://10.0.2.2:8000
 ```
 
-Demo accounts (password `demo` for all of them):
+Sign in with the Supabase demo accounts in `supabase/README.md` (staff
+`anna.weber.demo@example.com`, participant `lukas.demo@example.com`, …). The
+shared demo password is not in git; ask the AI/DB lead. Live end-to-end test:
+`flutter test test/integration/live_supabase_test.dart` (needs the backend
+running and `supabase/.demo-credentials.local`).
+
+Still local in this mode: library, routine templates, participant support
+preferences, and the "acknowledged" state of support requests.
+
+**Offline prototype (mock data):**
+
+```bash
+flutter run -d chrome -t lib/main_mvp.dart --dart-define=USE_MOCK_DATA=true
+```
+
+Mock demo accounts (password `demo` for all of them):
 
 | Username | Role | Shows |
 |---|---|---|

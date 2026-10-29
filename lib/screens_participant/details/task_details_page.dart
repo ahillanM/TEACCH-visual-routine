@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/app_scope.dart';
+import '../../core/models/app_user.dart';
 import '../../core/models/feed_entry.dart';
 import '../../core/time/time_format.dart';
 import '../../theme.dart';
@@ -18,7 +19,13 @@ class TaskDetailsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final event = entry.event!;
-    final library = AppScope.of(context).library;
+    final services = AppScope.of(context);
+    final library = services.library;
+    // Only the signed-in participant can mark their own activity as done
+    // (not staff using "Preview as participant").
+    final user = services.auth.user;
+    final participantId =
+        user?.role == Role.participant ? user!.participantId : null;
     final presentation = ParticipantPresentationScope.of(context);
     final style = CategoryStyle.of(event.category);
     final place = library.place(event.placeId);
@@ -102,6 +109,26 @@ class TaskDetailsPage extends StatelessWidget {
                 ),
               ),
             const SizedBox(height: AppSpace.md),
+            if (participantId != null) ...[
+              ListenableBuilder(
+                listenable: services.progress,
+                builder: (context, _) {
+                  final done = services.progress.isDone(event.id, participantId);
+                  return SizedBox(
+                    height: kLargeTouchTarget,
+                    child: OutlinedButton.icon(
+                      onPressed: () => services.progress
+                          .setDone(event.id, participantId, !done),
+                      icon: Icon(done
+                          ? Icons.check_circle_rounded
+                          : Icons.check_circle_outline_rounded),
+                      label: Text(done ? 'Done ✓  (tap to undo)' : 'I am done'),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: AppSpace.md),
+            ],
             SizedBox(
               height: kLargeTouchTarget,
               child: FilledButton.icon(
