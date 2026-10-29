@@ -4,12 +4,14 @@ import '../../app/app_scope.dart';
 import '../../core/logic/change_factory.dart';
 import '../../core/logic/impact_checker.dart';
 import '../../core/models/activity_category.dart';
+import '../../core/models/task_color.dart';
 import '../../core/models/library_items.dart';
 import '../../core/models/scheduled_event.dart';
 import '../../core/models/visual_ref.dart';
 import '../../core/time/time_format.dart';
 import '../../theme.dart';
 import '../../widgets/activity_visual.dart';
+import '../../widgets/task_color_picker.dart';
 import '../changes/change_impact_panel.dart';
 import '../common/staff_widgets.dart';
 import '../preview/participant_preview_dialog.dart';
@@ -48,6 +50,7 @@ class _ActivityEditorPageState extends State<ActivityEditorPage> {
   String? _placeId;
   String? _contactId;
   late VisualRef _visual;
+  TaskColor? _color;
   String? _libraryActivityId;
   String? _planBId;
   int? _reminder;
@@ -66,12 +69,13 @@ class _ActivityEditorPageState extends State<ActivityEditorPage> {
     _instructions = TextEditingController(text: e?.instructions ?? '');
     _category = e?.category ?? ActivityCategory.work;
     _kind = e?.kind ?? EventKind.activity;
-    _start = e?.start ??
-        DateTime(day.year, day.month, day.day, _defaultStartHour);
+    _start =
+        e?.start ?? DateTime(day.year, day.month, day.day, _defaultStartHour);
     _end = e?.end ?? _start.add(const Duration(minutes: _defaultDurationMin));
     _placeId = e?.placeId;
     _contactId = e?.contactId;
     _visual = e?.visual ?? const VisualRef(symbol: 'event');
+    _color = e?.color;
     _libraryActivityId = e?.libraryActivityId;
     _planBId = e?.planBActivityId;
     _reminder = e?.reminderMinutesBefore;
@@ -110,7 +114,9 @@ class _ActivityEditorPageState extends State<ActivityEditorPage> {
         .toList();
     return ScheduledEvent(
       id: _id,
-      title: _title.text.trim().isEmpty ? 'Untitled activity' : _title.text.trim(),
+      title: _title.text.trim().isEmpty
+          ? 'Untitled activity'
+          : _title.text.trim(),
       category: _category,
       kind: _kind,
       start: _start,
@@ -119,14 +125,17 @@ class _ActivityEditorPageState extends State<ActivityEditorPage> {
       contactId: _contactId,
       visual: _visual,
       whatToBring: bring,
-      instructions:
-          _instructions.text.trim().isEmpty ? null : _instructions.text.trim(),
+      instructions: _instructions.text.trim().isEmpty
+          ? null
+          : _instructions.text.trim(),
       assignedParticipantIds: _participants,
       status: base?.status ?? EventStatus.active,
       libraryActivityId: _libraryActivityId,
       planBActivityId: _planBId,
       reminderMinutesBefore: _reminder,
       replacesEventId: base?.replacesEventId,
+      color: _color,
+      createdByParticipantId: base?.createdByParticipantId,
     );
   }
 
@@ -144,7 +153,9 @@ class _ActivityEditorPageState extends State<ActivityEditorPage> {
     AppScope.of(context).schedule.saveDraft(_build());
     Navigator.of(context).pop();
     showStaffMessage(
-        context, 'Draft saved. Participants will not see it until you publish.');
+      context,
+      'Draft saved. Participants will not see it until you publish.',
+    );
   }
 
   void _preview() {
@@ -175,7 +186,10 @@ class _ActivityEditorPageState extends State<ActivityEditorPage> {
   void _publish() {
     if (!_validate()) return;
     if (_participants.isEmpty) {
-      showStaffMessage(context, 'Assign at least one participant before publishing.');
+      showStaffMessage(
+        context,
+        'Assign at least one participant before publishing.',
+      );
       return;
     }
     final services = AppScope.of(context);
@@ -184,7 +198,10 @@ class _ActivityEditorPageState extends State<ActivityEditorPage> {
       publishedBy: services.auth.user?.displayName ?? 'Staff',
     );
     Navigator.of(context).pop();
-    showStaffMessage(context, 'Published to ${_participants.length} participant(s).');
+    showStaffMessage(
+      context,
+      'Published to ${_participants.length} participant(s).',
+    );
   }
 
   @override
@@ -214,7 +231,7 @@ class _ActivityEditorPageState extends State<ActivityEditorPage> {
                 DropdownButtonFormField<String>(
                   initialValue: _libraryActivityId,
                   decoration: const InputDecoration(
-                    labelText: 'Start from library activity (optional)',
+                    labelText: 'Start from Library Activity (optional)',
                     prefixIcon: Icon(Icons.collections_bookmark_outlined),
                   ),
                   items: [
@@ -226,7 +243,9 @@ class _ActivityEditorPageState extends State<ActivityEditorPage> {
                 const SizedBox(height: AppSpace.md),
                 TextFormField(
                   controller: _title,
-                  decoration: const InputDecoration(labelText: 'Activity title'),
+                  decoration: const InputDecoration(
+                    labelText: 'Activity Title',
+                  ),
                   validator: (v) => (v == null || v.trim().isEmpty)
                       ? 'Please enter a title.'
                       : null,
@@ -241,36 +260,59 @@ class _ActivityEditorPageState extends State<ActivityEditorPage> {
                       width: 220,
                       child: DropdownButtonFormField<ActivityCategory>(
                         initialValue: _category,
-                        decoration: const InputDecoration(labelText: 'Category'),
+                        decoration: const InputDecoration(
+                          labelText: 'Category',
+                        ),
                         items: [
                           for (final c in ActivityCategory.values)
                             DropdownMenuItem(
                               value: c,
-                              child: Row(children: [
-                                Icon(CategoryStyle.of(c).icon,
-                                    color: CategoryStyle.of(c).color, size: 18),
-                                const SizedBox(width: AppSpace.sm),
-                                Text(CategoryStyle.of(c).label),
-                              ]),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    CategoryStyle.of(c, context.palette).icon,
+                                    color: CategoryStyle.of(
+                                      c,
+                                      context.palette,
+                                    ).color,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: AppSpace.sm),
+                                  Text(
+                                    CategoryStyle.of(c, context.palette).label,
+                                  ),
+                                ],
+                              ),
                             ),
                         ],
-                        onChanged: (c) => setState(() => _category = c ?? _category),
+                        onChanged: (c) =>
+                            setState(() => _category = c ?? _category),
                       ),
                     ),
                     SizedBox(
                       width: 220,
                       child: DropdownButtonFormField<EventKind>(
                         initialValue: _kind,
-                        decoration: const InputDecoration(labelText: 'Card type'),
+                        decoration: const InputDecoration(
+                          labelText: 'Card Type',
+                        ),
                         items: const [
                           DropdownMenuItem(
-                              value: EventKind.activity, child: Text('Activity')),
+                            value: EventKind.activity,
+                            child: Text('Activity'),
+                          ),
                           DropdownMenuItem(
-                              value: EventKind.travel, child: Text('Travel')),
+                            value: EventKind.travel,
+                            child: Text('Travel'),
+                          ),
                           DropdownMenuItem(
-                              value: EventKind.preparing, child: Text('Preparing')),
+                            value: EventKind.preparing,
+                            child: Text('Preparing'),
+                          ),
                           DropdownMenuItem(
-                              value: EventKind.waiting, child: Text('Waiting')),
+                            value: EventKind.waiting,
+                            child: Text('Waiting'),
+                          ),
                         ],
                         onChanged: (k) => setState(() => _kind = k ?? _kind),
                       ),
@@ -280,12 +322,17 @@ class _ActivityEditorPageState extends State<ActivityEditorPage> {
                 const SizedBox(height: AppSpace.md),
                 _VisualPicker(
                   value: _visual,
-                  accent: CategoryStyle.of(_category).color,
+                  accent: CategoryStyle.of(_category, context.palette).color,
                   options: [
                     for (final a in library.activities) a.visual,
                     for (final p in library.places) p.visual,
                   ],
                   onChanged: (v) => setState(() => _visual = v),
+                ),
+                const SizedBox(height: AppSpace.md),
+                TaskColorPicker(
+                  value: _color,
+                  onChanged: (c) => setState(() => _color = c),
                 ),
               ],
             ),
@@ -311,8 +358,13 @@ class _ActivityEditorPageState extends State<ActivityEditorPage> {
                     if (picked == null) return;
                     final duration = _end.difference(_start);
                     setState(() {
-                      _start = DateTime(picked.year, picked.month, picked.day,
-                          _start.hour, _start.minute);
+                      _start = DateTime(
+                        picked.year,
+                        picked.month,
+                        picked.day,
+                        _start.hour,
+                        _start.minute,
+                      );
                       _end = _start.add(duration);
                     });
                   },
@@ -335,14 +387,19 @@ class _ActivityEditorPageState extends State<ActivityEditorPage> {
                   width: 260,
                   child: DropdownButtonFormField<int?>(
                     initialValue: _reminder,
-                    decoration:
-                        const InputDecoration(labelText: 'Reminder / transition'),
+                    decoration: const InputDecoration(
+                      labelText: 'Reminder / transition',
+                    ),
                     items: [
                       const DropdownMenuItem(
-                          value: null, child: Text('Participant default')),
+                        value: null,
+                        child: Text('Participant Default'),
+                      ),
                       for (final m in _reminderOptions)
                         DropdownMenuItem(
-                            value: m, child: Text('$m min before start')),
+                          value: m,
+                          child: Text('$m min before start'),
+                        ),
                     ],
                     onChanged: (m) => setState(() => _reminder = m),
                   ),
@@ -352,7 +409,7 @@ class _ActivityEditorPageState extends State<ActivityEditorPage> {
           ),
           const SizedBox(height: AppSpace.lg),
           SectionCard(
-            title: 'Where and with whom',
+            title: 'Where and With Whom',
             child: Wrap(
               spacing: AppSpace.md,
               runSpacing: AppSpace.md,
@@ -360,10 +417,12 @@ class _ActivityEditorPageState extends State<ActivityEditorPage> {
                 SizedBox(
                   width: 300,
                   child: DropdownButtonFormField<String?>(
+                    isExpanded: true,
                     initialValue: _placeId,
                     decoration: const InputDecoration(
-                        labelText: 'Location',
-                        prefixIcon: Icon(Icons.place_outlined)),
+                      labelText: 'Location',
+                      prefixIcon: Icon(Icons.place_outlined),
+                    ),
                     items: [
                       const DropdownMenuItem(value: null, child: Text('None')),
                       for (final p in library.places)
@@ -375,15 +434,22 @@ class _ActivityEditorPageState extends State<ActivityEditorPage> {
                 SizedBox(
                   width: 300,
                   child: DropdownButtonFormField<String?>(
+                    isExpanded: true,
                     initialValue: _contactId,
                     decoration: const InputDecoration(
-                        labelText: 'Person / contact',
-                        prefixIcon: Icon(Icons.person_outline_rounded)),
+                      labelText: 'Person / Contact',
+                      prefixIcon: Icon(Icons.person_outline_rounded),
+                    ),
                     items: [
                       const DropdownMenuItem(value: null, child: Text('None')),
                       for (final c in library.contacts)
                         DropdownMenuItem(
-                            value: c.id, child: Text('${c.name} · ${c.roleLabel}')),
+                          value: c.id,
+                          child: Text(
+                            '${c.name} · ${c.roleLabel}',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                     ],
                     onChanged: (id) => setState(() => _contactId = id),
                   ),
@@ -393,14 +459,14 @@ class _ActivityEditorPageState extends State<ActivityEditorPage> {
           ),
           const SizedBox(height: AppSpace.lg),
           SectionCard(
-            title: 'Participant information',
+            title: 'Participant Information',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 TextFormField(
                   controller: _bring,
                   decoration: const InputDecoration(
-                    labelText: 'What to bring (comma separated)',
+                    labelText: 'What to Bring (comma separated)',
                     prefixIcon: Icon(Icons.backpack_outlined),
                   ),
                 ),
@@ -409,7 +475,7 @@ class _ActivityEditorPageState extends State<ActivityEditorPage> {
                   controller: _instructions,
                   maxLines: 3,
                   decoration: const InputDecoration(
-                    labelText: 'Short instructions (simple, concrete language)',
+                    labelText: 'Short Instructions (simple, concrete language)',
                     alignLabelWithHint: true,
                   ),
                 ),
@@ -432,7 +498,7 @@ class _ActivityEditorPageState extends State<ActivityEditorPage> {
           ),
           const SizedBox(height: AppSpace.lg),
           SectionCard(
-            title: 'Assign to',
+            title: 'Assign To',
             child: ListenableBuilder(
               listenable: services.participants,
               builder: (context, _) => ParticipantSelector(
@@ -447,12 +513,12 @@ class _ActivityEditorPageState extends State<ActivityEditorPage> {
     );
 
     final impact = SectionCard(
-      title: 'Impact check',
+      title: 'Impact Check',
       child: ChangeImpactPanel(report: report),
     );
 
     return Scaffold(
-      appBar: AppBar(title: Text(_isNew ? 'New activity' : 'Edit activity')),
+      appBar: AppBar(title: Text(_isNew ? 'New Activity' : 'Edit Activity')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpace.xl),
         child: wide
@@ -466,7 +532,11 @@ class _ActivityEditorPageState extends State<ActivityEditorPage> {
               )
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [form, const SizedBox(height: AppSpace.lg), impact],
+                children: [
+                  form,
+                  const SizedBox(height: AppSpace.lg),
+                  impact,
+                ],
               ),
       ),
       bottomNavigationBar: SafeArea(
@@ -480,7 +550,7 @@ class _ActivityEditorPageState extends State<ActivityEditorPage> {
               OutlinedButton.icon(
                 onPressed: _saveDraft,
                 icon: const Icon(Icons.save_outlined),
-                label: const Text('Save draft'),
+                label: const Text('Save Draft'),
               ),
               OutlinedButton.icon(
                 onPressed: _preview,
@@ -527,8 +597,10 @@ class _VisualPicker extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Visual / pictogram',
-            style: TextStyle(color: palette.textSecondary)),
+        Text(
+          'Visual / pictogram',
+          style: TextStyle(color: palette.textSecondary),
+        ),
         const SizedBox(height: AppSpace.sm),
         SizedBox(
           height: _size + AppSpace.sm,

@@ -28,9 +28,9 @@ void main() {
 
   Future<void> signIn(WidgetTester tester, String username) async {
     await tester.enterText(
-        find.widgetWithText(TextFormField, 'Username or email'), username);
+        find.widgetWithText(TextFormField, 'Username or Email'), username);
     await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'demo');
-    await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Sign In'));
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(const Duration(seconds: 1));
   }
@@ -55,9 +55,9 @@ void main() {
       (tester) async {
     await pumpApp(tester);
     await tester.enterText(
-        find.widgetWithText(TextFormField, 'Username or email'), 'lena');
+        find.widgetWithText(TextFormField, 'Username or Email'), 'lena');
     await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'x');
-    await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Sign In'));
     await tester.pump(const Duration(seconds: 1));
     expect(find.textContaining('do not match'), findsOneWidget);
     expect(find.byType(ParticipantShell), findsNothing);

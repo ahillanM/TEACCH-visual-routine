@@ -17,7 +17,7 @@ class SupportRequestsPanel extends StatelessWidget {
     final services = AppScope.of(context);
     final requests = services.support.unresolved;
     return SectionCard(
-      title: 'Support requests',
+      title: 'Support Requests',
       child: requests.isEmpty
           ? const EmptyState(
               icon: Icons.check_circle_outline_rounded,
@@ -64,7 +64,7 @@ class _RequestTile extends StatelessWidget {
                       icon: open
                           ? Icons.notifications_active_outlined
                           : Icons.visibility_outlined,
-                      color: open ? palette.changeText : palette.textSecondary,
+                      color: open ? palette.brand : palette.textSecondary,
                       fontSize: 11,
                     ),
                   ],

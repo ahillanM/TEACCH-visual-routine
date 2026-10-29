@@ -44,7 +44,11 @@ class TimeProgress extends StatelessWidget {
           if (presentation.showProgressBar) const SizedBox(height: AppSpace.sm),
           Row(
             children: [
-              Icon(Icons.schedule_rounded, size: 20, color: palette.textSecondary),
+              Icon(
+                Icons.schedule_rounded,
+                size: 20,
+                color: palette.textSecondary,
+              ),
               const SizedBox(width: AppSpace.xs),
               Expanded(
                 child: Text(

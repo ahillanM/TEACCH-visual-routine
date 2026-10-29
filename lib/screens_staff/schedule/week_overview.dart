@@ -128,7 +128,7 @@ class _WeekChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = CategoryStyle.of(event.category);
+    final style = CategoryStyle.of(event.category, context.palette);
     final palette = context.palette;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpace.xs),
@@ -145,6 +145,17 @@ class _WeekChip extends StatelessWidget {
                 Icon(event.isCancelled ? Icons.event_busy_rounded : style.icon,
                     size: 14,
                     color: event.isCancelled ? palette.textSecondary : style.color),
+                if (event.color != null) ...[
+                  const SizedBox(width: AppSpace.xxs),
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: TaskColorStyle.of(event.color!, palette).accent,
+                    ),
+                  ),
+                ],
                 const SizedBox(width: AppSpace.xs),
                 Expanded(
                   child: Text(

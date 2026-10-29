@@ -22,24 +22,33 @@ class ParticipantDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final services = AppScope.of(context);
     return ListenableBuilder(
-      listenable: Listenable.merge(
-          [services.participants, services.schedule, services.clock]),
+      listenable: Listenable.merge([
+        services.participants,
+        services.schedule,
+        services.clock,
+      ]),
       builder: (context, _) {
         final p = services.participants[participantId];
         if (p == null) {
           return const Scaffold(
-              body: EmptyState(
-                  icon: Icons.person_off_outlined,
-                  title: 'Participant not found'));
+            body: EmptyState(
+              icon: Icons.person_off_outlined,
+              title: 'Participant not found',
+            ),
+          );
         }
         final now = services.clock.now();
         final day = ParticipantDay.resolve(
-            store: services.schedule, participantId: p.id, now: now);
+          store: services.schedule,
+          participantId: p.id,
+          now: now,
+        );
         final events = services.schedule
             .staffEventsOn(now)
             .where((e) => e.isAssignedTo(p.id))
             .toList();
-        final wide = MediaQuery.sizeOf(context).width >= AppBreakpoints.expanded;
+        final wide =
+            MediaQuery.sizeOf(context).width >= AppBreakpoints.expanded;
 
         final todayCard = SectionCard(
           title: 'Today',
@@ -47,32 +56,43 @@ class ParticipantDetailPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               InfoLine(
-                  icon: Icons.radio_button_checked_rounded,
-                  text: 'Now: ${ParticipantStatusList.describe(day.current)}'),
+                icon: Icons.radio_button_checked_rounded,
+                text: 'Now: ${ParticipantStatusList.describe(day.current)}',
+              ),
               if (day.nextActivity != null)
                 InfoLine(
-                    icon: Icons.arrow_downward_rounded,
-                    text: 'Next: ${day.nextActivity!.event!.title} at '
-                        '${TimeFormat.hm(day.nextActivity!.start)}'),
+                  icon: Icons.arrow_downward_rounded,
+                  text:
+                      'Next: ${day.nextActivity!.event!.title} at '
+                      '${TimeFormat.hm(day.nextActivity!.start)}',
+                ),
               if (day.hasPendingChanges)
                 const InfoLine(
-                    icon: Icons.mark_chat_unread_outlined,
-                    text: 'A published change has not been acknowledged yet.'),
+                  icon: Icons.mark_chat_unread_outlined,
+                  text: 'A published change has not been acknowledged yet.',
+                ),
               const Divider(height: AppSpace.xl),
               for (final e in events)
                 ListTile(
                   dense: true,
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(CategoryStyle.of(e.category).icon,
-                      color: CategoryStyle.of(e.category).color),
-                  title: Text(e.title,
-                      style: TextStyle(
-                          decoration: e.isCancelled
-                              ? TextDecoration.lineThrough
-                              : null)),
+                  leading: Icon(
+                    CategoryStyle.of(e.category, context.palette).icon,
+                    color: CategoryStyle.of(e.category, context.palette).color,
+                  ),
+                  title: Text(
+                    e.title,
+                    style: TextStyle(
+                      decoration: e.isCancelled
+                          ? TextDecoration.lineThrough
+                          : null,
+                    ),
+                  ),
                   subtitle: Text(TimeFormat.range(e.start, e.end)),
                   trailing: EventStatusBadges(
-                      event: e, isDraft: services.schedule.hasDraft(e.id)),
+                    event: e,
+                    isDraft: services.schedule.hasDraft(e.id),
+                  ),
                   onTap: () => showEventDetails(context, e.id),
                 ),
             ],
@@ -80,7 +100,7 @@ class ParticipantDetailPage extends StatelessWidget {
         );
 
         final prefsCard = SectionCard(
-          title: 'Support & display preferences',
+          title: 'Support & Display Preferences',
           child: ProfilePreferencesEditor(
             profile: p.profile,
             onChanged: (profile) =>
@@ -98,16 +118,18 @@ class ParticipantDetailPage extends StatelessWidget {
                 subtitle: p.livingGroup,
                 actions: [
                   FilledButton.icon(
-                    onPressed: () => showParticipantPreview(context,
-                        participantIds: [p.id]),
+                    onPressed: () =>
+                        showParticipantPreview(context, participantIds: [p.id]),
                     icon: const Icon(Icons.phone_android_rounded),
                     label: const Text('Preview as Participant'),
                   ),
                   OutlinedButton.icon(
-                    onPressed: () => showAssignRoutineDialog(context,
-                        initialParticipantIds: {p.id}),
+                    onPressed: () => showAssignRoutineDialog(
+                      context,
+                      initialParticipantIds: {p.id},
+                    ),
                     icon: const Icon(Icons.playlist_add_rounded),
-                    label: const Text('Assign routine'),
+                    label: const Text('Assign Routine'),
                   ),
                 ],
               ),

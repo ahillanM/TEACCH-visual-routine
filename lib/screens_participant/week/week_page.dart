@@ -8,6 +8,7 @@ import '../../widgets/activity_visual.dart';
 import '../../widgets/common.dart';
 import '../../widgets/status_badge.dart';
 import '../participant_presentation_scope.dart';
+import '../plan/plan_free_time_page.dart';
 
 /// A simple, visual overview of the week – one row per day. Read-only.
 class WeekPage extends StatelessWidget {
@@ -30,23 +31,27 @@ class WeekPage extends StatelessWidget {
           children: [
             Semantics(
               header: true,
-              child: Text('This week',
-                  style: Theme.of(context).textTheme.headlineMedium),
+              child: Text(
+                'This Week',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
             ),
             const SizedBox(height: AppSpace.lg),
             for (var i = 0; i < 7; i++)
-              Builder(builder: (context) {
-                final day = monday.add(Duration(days: i));
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpace.md),
-                  child: _DayRow(
-                    day: day,
-                    isToday: TimeFormat.sameDay(day, today),
-                    isPast: day.isBefore(today),
-                    events: snapshot.activeEventsFor(participantId, day),
-                  ),
-                );
-              }),
+              Builder(
+                builder: (context) {
+                  final day = monday.add(Duration(days: i));
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpace.md),
+                    child: _DayRow(
+                      day: day,
+                      isToday: TimeFormat.sameDay(day, today),
+                      isPast: day.isBefore(today),
+                      events: snapshot.activeEventsFor(participantId, day),
+                    ),
+                  );
+                },
+              ),
           ],
         );
       },
@@ -75,7 +80,8 @@ class _DayRow extends StatelessWidget {
     final presentation = ParticipantPresentationScope.of(context);
     return Semantics(
       container: true,
-      label: '${TimeFormat.weekday(day)}${isToday ? ', today' : ''}, '
+      label:
+          '${TimeFormat.weekday(day)}${isToday ? ', today' : ''}, '
           '${events.length} activities',
       child: Card(
         color: isPast ? palette.doneSurface : palette.surface,
@@ -96,11 +102,15 @@ class _DayRow extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(TimeFormat.weekday(day),
-                        style: Theme.of(context).textTheme.titleLarge),
+                    Text(
+                      TimeFormat.weekday(day),
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
                     const SizedBox(width: AppSpace.sm),
-                    Text('${day.day}.${day.month}.',
-                        style: TextStyle(color: palette.textSecondary)),
+                    Text(
+                      '${day.day}.${day.month}.',
+                      style: TextStyle(color: palette.textSecondary),
+                    ),
                     const Spacer(),
                     if (isToday)
                       StatusBadge(
@@ -124,11 +134,15 @@ class _DayRow extends StatelessWidget {
                         width: _thumb,
                         child: ActivityVisual(
                           visual: events[i].visual,
-                          accent: CategoryStyle.of(events[i].category).color,
+                          accent: CategoryStyle.of(
+                            events[i].category,
+                            context.palette,
+                          ).color,
                           semanticLabel: events[i].title,
                           height: _thumb,
                           showPhoto: false,
-                          showSymbol: presentation.showSymbol ||
+                          showSymbol:
+                              presentation.showSymbol ||
                               !presentation.showPhoto,
                           desaturate: isPast,
                           borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -146,6 +160,14 @@ class _DayRow extends StatelessWidget {
   }
 
   void _openDay(BuildContext context) {
+    // Future days (e.g. a free Saturday): plan with speech/AI; the server
+    // decides what is really free.
+    final canPlan = AppScope.of(context).freeTime != null && !isPast;
+    void plan(BuildContext sheet) {
+      Navigator.of(sheet).pop();
+      openFreeTimePlanner(context, date: day);
+    }
+
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -153,24 +175,44 @@ class _DayRow extends StatelessWidget {
       builder: (context) => SafeArea(
         child: ConstrainedBox(
           constraints: BoxConstraints(
-              maxHeight: MediaQuery.sizeOf(context).height * 0.8),
+            maxHeight: MediaQuery.sizeOf(context).height * 0.8,
+          ),
           child: ListView(
             shrinkWrap: true,
             padding: const EdgeInsets.all(AppSpace.lg),
             children: [
-              Text(TimeFormat.longDate(day),
-                  style: Theme.of(context).textTheme.titleLarge),
+              Text(
+                TimeFormat.longDate(day),
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
               const SizedBox(height: AppSpace.md),
               if (events.isEmpty)
                 const EmptyState(
-                    icon: Icons.event_available_rounded,
-                    title: 'Nothing planned'),
+                  icon: Icons.event_available_rounded,
+                  title: 'Nothing planned',
+                ),
+              if (canPlan) ...[
+                SizedBox(
+                  height: kLargeTouchTarget,
+                  child: FilledButton.tonalIcon(
+                    key: const Key('plan-day'),
+                    onPressed: () => plan(context),
+                    icon: const Icon(Icons.edit_calendar_rounded),
+                    label: const Text('Plan my free time'),
+                  ),
+                ),
+                const SizedBox(height: AppSpace.md),
+              ],
               for (final e in events)
                 ListTile(
-                  leading: Icon(CategoryStyle.of(e.category).icon,
-                      color: CategoryStyle.of(e.category).color),
-                  title: Text(e.title,
-                      style: const TextStyle(fontWeight: FontWeight.w700)),
+                  leading: Icon(
+                    CategoryStyle.of(e.category, context.palette).icon,
+                    color: CategoryStyle.of(e.category, context.palette).color,
+                  ),
+                  title: Text(
+                    e.title,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
                   subtitle: Text(TimeFormat.range(e.start, e.end)),
                 ),
             ],

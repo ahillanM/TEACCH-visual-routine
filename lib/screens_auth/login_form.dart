@@ -85,7 +85,7 @@ class _LoginFormState extends State<LoginForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Sign in', style: Theme.of(context).textTheme.titleLarge),
+                Text('Sign In', style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: AppSpace.lg),
                 if (auth.error != null) ...[
                   _ErrorBox(message: auth.error!),
@@ -97,7 +97,7 @@ class _LoginFormState extends State<LoginForm> {
                   autofillHints: const [AutofillHints.username],
                   textInputAction: TextInputAction.next,
                   decoration: const InputDecoration(
-                    labelText: 'Username or email',
+                    labelText: 'Username or Email',
                     prefixIcon: Icon(Icons.person_outline_rounded),
                   ),
                   onChanged: (_) => auth.clearError(),
@@ -118,7 +118,7 @@ class _LoginFormState extends State<LoginForm> {
                     labelText: 'Password',
                     prefixIcon: const Icon(Icons.lock_outline_rounded),
                     suffixIcon: IconButton(
-                      tooltip: _obscure ? 'Show password' : 'Hide password',
+                      tooltip: _obscure ? 'Show Password' : 'Hide Password',
                       icon: Icon(_obscure
                           ? Icons.visibility_outlined
                           : Icons.visibility_off_outlined),
@@ -150,7 +150,7 @@ class _LoginFormState extends State<LoginForm> {
                                 ? null
                                 : (v) => setState(() => _remember = v ?? false),
                           ),
-                          const Text('Remember me'),
+                          const Text('Remember Me'),
                           const SizedBox(width: AppSpace.sm),
                         ],
                       ),
@@ -180,7 +180,7 @@ class _LoginFormState extends State<LoginForm> {
                               const Text('Signing in…'),
                             ],
                           )
-                        : const Text('Sign in'),
+                        : const Text('Sign In'),
                   ),
                 ),
                 const SizedBox(height: AppSpace.lg),
@@ -206,7 +206,7 @@ class _ErrorBox extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpace.md),
         decoration: BoxDecoration(
-          color: palette.danger.withValues(alpha: 0.08),
+          color: palette.dangerSoft,
           borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(color: palette.danger.withValues(alpha: 0.5)),
         ),
@@ -234,7 +234,7 @@ class _DemoAccountsHint extends StatelessWidget {
     return ExpansionTile(
       tilePadding: EdgeInsets.zero,
       shape: const Border(),
-      title: Text('Demo accounts',
+      title: Text('Demo Accounts',
           style: TextStyle(color: palette.textSecondary, fontSize: 14)),
       children: [
         Text(

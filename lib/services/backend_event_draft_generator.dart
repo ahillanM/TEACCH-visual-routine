@@ -27,11 +27,16 @@ class BackendEventDraftGenerator implements EventDraftGenerator {
     http.Client? client,
   }) : _client = client ?? http.Client();
 
-  @override
-  Future<List<EventProposal>> propose(
-    String text, {
-    required DateTime today,
-    required List<LibraryActivity> library,
+  /// Raw `POST /ai/generate-routine` response (a validated DRAFT proposal).
+  /// Shared by staff "Build with AI" and participant free-time planning, so
+  /// typed and dictated text always use the same pipeline. [existingItems]
+  /// ({title, date, startTime, endTime}) let the backend flag conflicts; the
+  /// app and the database still decide availability themselves.
+  Future<Map<String, dynamic>> generateRoutine({
+    required String instruction,
+    required DateTime referenceDate,
+    required String requesterRole,
+    List<Map<String, String?>> existingItems = const [],
   }) async {
     final http.Response response;
     try {
@@ -43,9 +48,10 @@ class BackendEventDraftGenerator implements EventDraftGenerator {
               if (apiKey.isNotEmpty) 'X-API-Key': apiKey,
             },
             body: jsonEncode({
-              'instruction': text,
-              'referenceDate': _date(today),
-              'requesterRole': 'staff',
+              'instruction': instruction,
+              'referenceDate': _date(referenceDate),
+              'requesterRole': requesterRole,
+              if (existingItems.isNotEmpty) 'existingItems': existingItems,
             }),
           )
           .timeout(_timeout);
@@ -64,6 +70,20 @@ class BackendEventDraftGenerator implements EventDraftGenerator {
             : 'The AI service failed (HTTP ${response.statusCode}).',
       );
     }
+    return body;
+  }
+
+  @override
+  Future<List<EventProposal>> propose(
+    String text, {
+    required DateTime today,
+    required List<LibraryActivity> library,
+  }) async {
+    final body = await generateRoutine(
+      instruction: text,
+      referenceDate: today,
+      requesterRole: 'staff',
+    );
 
     final day =
         DateTime.tryParse((body['date'] as String?) ?? '') ??
@@ -95,7 +115,7 @@ class BackendEventDraftGenerator implements EventDraftGenerator {
           : null;
       final keyword = (m['pictogramKeyword'] as String?)?.trim().toLowerCase();
       pending.add(
-        (match != null ? Future.value(match.visual) : _visualFor(keyword)).then(
+        (match != null ? Future.value(match.visual) : visualFor(keyword)).then(
           (visual) => EventProposal(
             title: title,
             start: start,
@@ -124,7 +144,7 @@ class BackendEventDraftGenerator implements EventDraftGenerator {
   /// Icon key for the AI's pictogram keyword, plus an ARASAAC pictogram if the
   /// public ARASAAC search finds one. Only the keyword is sent (no names or
   /// ids); any failure falls back to the icon.
-  Future<VisualRef> _visualFor(String? keyword) async {
+  Future<VisualRef> visualFor(String? keyword) async {
     if (keyword == null || keyword.isEmpty) {
       return const VisualRef(symbol: 'event');
     }

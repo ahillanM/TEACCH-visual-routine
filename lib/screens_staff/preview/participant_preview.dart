@@ -86,7 +86,7 @@ class _ParticipantPreviewState extends State<ParticipantPreview> {
                     icon: Icon(Icons.view_day_outlined)),
                 ButtonSegment(
                     value: _PreviewMode.notice,
-                    label: Text('Plan changed'),
+                    label: Text('Plan Changed'),
                     icon: Icon(Icons.published_with_changes_rounded)),
                 ButtonSegment(
                     value: _PreviewMode.after,
@@ -127,14 +127,14 @@ class PhoneFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: 'Participant preview',
+      label: 'Participant Preview',
       container: true,
       child: Container(
         width: size.width,
         height: size.height,
         padding: const EdgeInsets.all(AppSpace.sm),
         decoration: BoxDecoration(
-          color: const Color(0xFF1F2933),
+          color: context.palette.previewFrame,
           borderRadius: BorderRadius.circular(36),
         ),
         child: ClipRRect(

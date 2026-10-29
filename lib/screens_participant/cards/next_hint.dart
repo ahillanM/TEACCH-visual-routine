@@ -15,8 +15,10 @@ class NextHint extends StatelessWidget {
     final palette = context.palette;
     return Row(
       children: [
-        Icon(Icons.subdirectory_arrow_right_rounded,
-            color: palette.textSecondary),
+        Icon(
+          Icons.subdirectory_arrow_right_rounded,
+          color: palette.textSecondary,
+        ),
         const SizedBox(width: AppSpace.xs),
         Expanded(
           child: Text.rich(

@@ -24,15 +24,17 @@ class TaskDetailsPage extends StatelessWidget {
     // Only the signed-in participant can mark their own activity as done
     // (not staff using "Preview as participant").
     final user = services.auth.user;
-    final participantId =
-        user?.role == Role.participant ? user!.participantId : null;
+    final participantId = user?.role == Role.participant
+        ? user!.participantId
+        : null;
     final presentation = ParticipantPresentationScope.of(context);
-    final style = CategoryStyle.of(event.category);
+    final style = CategoryStyle.of(event.category, context.palette);
     final place = library.place(event.placeId);
     final contact = library.contact(event.contactId);
     final next = entry.nextEvent;
-    final description =
-        library.activity(event.libraryActivityId)?.participantDescription;
+    final description = library
+        .activity(event.libraryActivityId)
+        ?.participantDescription;
 
     return Scaffold(
       appBar: AppBar(title: Text(event.title)),
@@ -52,12 +54,16 @@ class TaskDetailsPage extends StatelessWidget {
             const SizedBox(height: AppSpace.lg),
             Semantics(
               header: true,
-              child: Text(event.title,
-                  style: Theme.of(context).textTheme.headlineSmall),
+              child: Text(
+                event.title,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
             ),
             const SizedBox(height: AppSpace.xs),
-            Text(TimeFormat.range(event.start, event.end),
-                style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              TimeFormat.range(event.start, event.end),
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             if (description != null && description.isNotEmpty) ...[
               const SizedBox(height: AppSpace.md),
               Text(description, style: const TextStyle(fontSize: 17)),
@@ -81,30 +87,35 @@ class TaskDetailsPage extends StatelessWidget {
               ),
             if (event.whatToBring.isNotEmpty)
               _Section(
-                label: 'What to bring',
+                label: 'What to Bring',
                 child: Column(
                   children: [
                     for (final item in event.whatToBring)
                       Padding(
                         padding: const EdgeInsets.only(bottom: AppSpace.xs),
                         child: InfoLine(
-                            icon: Icons.backpack_outlined, text: item),
+                          icon: Icons.backpack_outlined,
+                          text: item,
+                        ),
                       ),
                   ],
                 ),
               ),
             if (event.instructions != null && event.instructions!.isNotEmpty)
               _Section(
-                label: 'What to do',
-                child: Text(event.instructions!,
-                    style: const TextStyle(fontSize: 17, height: 1.4)),
+                label: 'What to Do',
+                child: Text(
+                  event.instructions!,
+                  style: const TextStyle(fontSize: 17, height: 1.4),
+                ),
               ),
             if (next != null)
               _Section(
                 label: 'Afterwards',
                 child: InfoLine(
                   icon: Icons.subdirectory_arrow_right_rounded,
-                  text: '${next.title} at ${TimeFormat.hm(next.start)}'
+                  text:
+                      '${next.title} at ${TimeFormat.hm(next.start)}'
                       '${next.placeId == null ? '' : ' · ${library.placeName(next.placeId)}'}',
                 ),
               ),
@@ -113,16 +124,24 @@ class TaskDetailsPage extends StatelessWidget {
               ListenableBuilder(
                 listenable: services.progress,
                 builder: (context, _) {
-                  final done = services.progress.isDone(event.id, participantId);
+                  final done = services.progress.isDone(
+                    event.id,
+                    participantId,
+                  );
                   return SizedBox(
                     height: kLargeTouchTarget,
                     child: OutlinedButton.icon(
-                      onPressed: () => services.progress
-                          .setDone(event.id, participantId, !done),
-                      icon: Icon(done
-                          ? Icons.check_circle_rounded
-                          : Icons.check_circle_outline_rounded),
-                      label: Text(done ? 'Done ✓  (tap to undo)' : 'I am done'),
+                      onPressed: () => services.progress.setDone(
+                        event.id,
+                        participantId,
+                        !done,
+                      ),
+                      icon: Icon(
+                        done
+                            ? Icons.check_circle_rounded
+                            : Icons.check_circle_outline_rounded,
+                      ),
+                      label: Text(done ? 'Done ✓  (tap to undo)' : 'I Am Done'),
                     ),
                   );
                 },
@@ -134,7 +153,7 @@ class TaskDetailsPage extends StatelessWidget {
               child: FilledButton.icon(
                 onPressed: () => Navigator.of(context).pop(),
                 icon: const Icon(Icons.arrow_back_rounded),
-                label: const Text('Back to my day'),
+                label: const Text('Back to My Day'),
               ),
             ),
           ],

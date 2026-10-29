@@ -183,3 +183,21 @@ def test_cors_dev_localhost(client):
         "Origin": "http://localhost:54321", "Access-Control-Request-Method": "POST",
         "Access-Control-Request-Headers": "content-type"})
     assert r.headers.get("access-control-allow-origin") == "http://localhost:54321"
+
+
+def test_named_weekday_is_resolved_deterministically():
+    from datetime import date
+    from app.schemas import GenerateRoutineRequest
+    req = GenerateRoutineRequest(instruction="On Saturday breakfast at 8 and Samstag nothing else",
+                                 requesterRole="participant")
+    raw = {"items": [{"title": "Breakfast", "date": "2026-11-01", "startTime": "08:00"},  # LLM said Sunday
+                     {"title": "Football", "date": None, "startTime": "14:00"},
+                     {"title": "Movie", "date": "2026-11-07", "startTime": "20:00"}]}  # a Saturday: kept
+    p = build_proposal(raw, req, "text", "m", date(2026, 10, 29))  # Thursday
+    assert [i.date for i in p.items] == ["2026-10-31", "2026-10-31", "2026-11-07"]
+    assert "date_corrected" in codes(p)
+    # Two different weekdays named: leave the model's dates alone.
+    req2 = GenerateRoutineRequest(instruction="Friday gym, Saturday football", requesterRole="participant")
+    p2 = build_proposal({"items": [{"title": "Gym", "date": "2026-10-30", "startTime": "10:00"}]},
+                        req2, "text", "m", date(2026, 10, 29))
+    assert p2.items[0].date == "2026-10-30"

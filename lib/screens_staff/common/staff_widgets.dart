@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/app_scope.dart';
 import '../../core/models/participant.dart';
 import '../../core/models/scheduled_event.dart';
 import '../../core/time/time_format.dart';
@@ -12,20 +13,25 @@ class ParticipantAvatar extends StatelessWidget {
   final Participant participant;
   final double radius;
 
-  const ParticipantAvatar({super.key, required this.participant, this.radius = 20});
+  const ParticipantAvatar({
+    super.key,
+    required this.participant,
+    this.radius = 20,
+  });
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
     return CircleAvatar(
       radius: radius,
-      backgroundColor: palette.brand.withValues(alpha: 0.14),
+      backgroundColor: palette.brandSoft,
       child: Text(
         participant.initials,
         style: TextStyle(
-            fontWeight: FontWeight.w800,
-            color: palette.brand,
-            fontSize: radius * 0.8),
+          fontWeight: FontWeight.w800,
+          color: palette.brand,
+          fontSize: radius * 0.8,
+        ),
       ),
     );
   }
@@ -37,15 +43,83 @@ class ParticipantSelector extends StatelessWidget {
   final Set<String> selected;
   final ValueChanged<Set<String>> onChanged;
 
+  /// Shows the staff's saved groups as one-tap shortcuts above the people.
+  final bool showGroups;
+
   const ParticipantSelector({
     super.key,
     required this.participants,
     required this.selected,
     required this.onChanged,
+    this.showGroups = true,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (!showGroups) return _people(context);
+    final groups = AppScope.of(context).groups;
+    return ListenableBuilder(
+      listenable: groups,
+      builder: (context, _) {
+        final known = {for (final p in participants) p.id};
+        final usable = [
+          for (final g in groups.groups)
+            if (g.memberIds.any(known.contains)) g,
+        ];
+        if (usable.isEmpty) return _people(context);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Groups',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: context.palette.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppSpace.xs),
+            Wrap(
+              spacing: AppSpace.sm,
+              runSpacing: AppSpace.sm,
+              children: [
+                for (final g in usable)
+                  _groupChip(g.name, g.memberIds.where(known.contains).toSet()),
+              ],
+            ),
+            const SizedBox(height: AppSpace.md),
+            Text(
+              'People',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: context.palette.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppSpace.xs),
+            _people(context),
+          ],
+        );
+      },
+    );
+  }
+
+  /// Selected when every member is selected; toggling adds or removes the
+  /// whole group without touching anyone else.
+  Widget _groupChip(String name, Set<String> members) {
+    final allIn = selected.containsAll(members);
+    return FilterChip(
+      avatar: const Icon(Icons.groups_2_outlined, size: 18),
+      label: Text('$name (${members.length})'),
+      selected: allIn,
+      showCheckmark: false,
+      onSelected: (_) => onChanged(
+        allIn ? ({...selected}..removeAll(members)) : {...selected, ...members},
+      ),
+    );
+  }
+
+  Widget _people(BuildContext context) {
     return Wrap(
       spacing: AppSpace.sm,
       runSpacing: AppSpace.sm,
@@ -61,12 +135,16 @@ class ParticipantSelector extends StatelessWidget {
           ),
         if (participants.length > 1)
           ActionChip(
-            label: Text(selected.length == participants.length
-                ? 'Clear all'
-                : 'Select all'),
-            onPressed: () => onChanged(selected.length == participants.length
-                ? {}
-                : {for (final p in participants) p.id}),
+            label: Text(
+              selected.length == participants.length
+                  ? 'Clear All'
+                  : 'Select All',
+            ),
+            onPressed: () => onChanged(
+              selected.length == participants.length
+                  ? {}
+                  : {for (final p in participants) p.id},
+            ),
           ),
       ],
     );
@@ -74,11 +152,16 @@ class ParticipantSelector extends StatelessWidget {
 }
 
 /// Summary tile for the dashboard ("3 schedule changes").
+///
+/// Colour comes from [tone] (icon chip + top strip), never a fully
+/// saturated card; [needsAttention] adds the strip and a stronger border.
+/// Without a tone the tile stays neutral (slate).
 class SummaryTile extends StatelessWidget {
   final IconData icon;
   final String value;
   final String label;
   final bool needsAttention;
+  final SemanticTone? tone;
   final VoidCallback? onTap;
 
   const SummaryTile({
@@ -87,6 +170,7 @@ class SummaryTile extends StatelessWidget {
     required this.value,
     required this.label,
     this.needsAttention = false,
+    this.tone,
     this.onTap,
   });
 
@@ -95,31 +179,49 @@ class SummaryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final accent = needsAttention ? palette.changeText : palette.textSecondary;
+    final iconColor = tone?.color ?? palette.textSecondary;
+    final iconBackground = tone?.soft ?? palette.surfaceMuted;
+    final strip = tone?.accent ?? palette.textSecondary;
     return SizedBox(
       width: width,
       child: Card(
-        color: needsAttention ? palette.changeSurface : palette.surface,
+        clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           side: BorderSide(
-              color: needsAttention ? palette.changeBorder : palette.border),
+            color: needsAttention ? strip : palette.border,
+            width: needsAttention ? 1.5 : 1,
+          ),
         ),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          child: Padding(
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: needsAttention ? strip : Colors.transparent,
+                  width: 4,
+                ),
+              ),
+            ),
             padding: const EdgeInsets.all(AppSpace.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(icon, color: accent),
+                Container(
+                  padding: const EdgeInsets.all(AppSpace.sm),
+                  decoration: BoxDecoration(
+                    color: iconBackground,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: Icon(icon, color: iconColor),
+                ),
                 const SizedBox(height: AppSpace.sm),
-                Text(value,
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineMedium
-                        ?.copyWith(color: palette.textPrimary)),
+                Text(
+                  value,
+                  style: Theme.of(context).textTheme.headlineMedium
+                      ?.copyWith(color: palette.textPrimary),
+                ),
                 Text(label, style: TextStyle(color: palette.textSecondary)),
               ],
             ),
@@ -135,7 +237,11 @@ class EventStatusBadges extends StatelessWidget {
   final ScheduledEvent event;
   final bool isDraft;
 
-  const EventStatusBadges({super.key, required this.event, this.isDraft = false});
+  const EventStatusBadges({
+    super.key,
+    required this.event,
+    this.isDraft = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -146,22 +252,32 @@ class EventStatusBadges extends StatelessWidget {
       children: [
         if (isDraft)
           StatusBadge(
-              label: 'Draft',
-              icon: Icons.edit_note_rounded,
-              color: palette.changeText,
-              fontSize: 11),
+            label: 'Draft',
+            icon: Icons.edit_note_rounded,
+            color: palette.textSecondary,
+            fontSize: 11,
+          ),
         if (event.isCancelled)
           StatusBadge(
-              label: 'Cancelled',
-              icon: Icons.event_busy_rounded,
-              color: palette.textSecondary,
-              fontSize: 11),
+            label: 'Cancelled',
+            icon: Icons.event_busy_rounded,
+            color: palette.textSecondary,
+            fontSize: 11,
+          ),
+        if (event.isParticipantOwned)
+          StatusBadge(
+            label: 'Added by Participant',
+            icon: Icons.person_add_alt_outlined,
+            color: palette.textSecondary,
+            fontSize: 11,
+          ),
         if (event.assignedParticipantIds.length > 1)
           StatusBadge(
-              label: '${event.assignedParticipantIds.length} participants',
-              icon: Icons.groups_outlined,
-              color: palette.textSecondary,
-              fontSize: 11),
+            label: '${event.assignedParticipantIds.length} participants',
+            icon: Icons.groups_outlined,
+            color: palette.textSecondary,
+            fontSize: 11,
+          ),
       ],
     );
   }
@@ -195,8 +311,10 @@ class SectionCard extends StatelessWidget {
                 Expanded(
                   child: Semantics(
                     header: true,
-                    child: Text(title,
-                        style: Theme.of(context).textTheme.titleMedium),
+                    child: Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                   ),
                 ),
                 ?trailing,
@@ -239,8 +357,15 @@ class TimeField extends StatelessWidget {
           ),
         );
         if (picked == null) return;
-        onChanged(DateTime(
-            value.year, value.month, value.day, picked.hour, picked.minute));
+        onChanged(
+          DateTime(
+            value.year,
+            value.month,
+            value.day,
+            picked.hour,
+            picked.minute,
+          ),
+        );
       },
     );
   }

@@ -31,7 +31,7 @@ class TravelCard extends StatelessWidget {
     final event = entry.event!;
     final presentation = ParticipantPresentationScope.of(context);
     final library = AppScope.of(context).library;
-    final style = CategoryStyle.of(event.category);
+    final style = CategoryStyle.of(event.category, context.palette);
     final from = library.place(event.placeId);
     final next = entry.nextEvent;
     final destination = library.place(next?.placeId);
@@ -41,6 +41,7 @@ class TravelCard extends StatelessWidget {
       accent: style.color,
       categoryIcon: style.icon,
       categoryLabel: style.label,
+      taskColor: event.color,
       isImmediateNext: isImmediateNext,
       onTap: onTap,
       semanticSummary:
@@ -67,23 +68,26 @@ class TravelCard extends StatelessWidget {
           if (presentation.showPlace && from != null) ...[
             const SizedBox(height: AppSpace.md),
             InfoLine(
-                icon: Icons.trip_origin_rounded,
-                text: 'From: ${from.name}',
-                semanticPrefix: 'Start'),
+              icon: Icons.trip_origin_rounded,
+              text: 'From: ${from.name}',
+              semanticPrefix: 'Start',
+            ),
           ],
           if (presentation.showPlace && destination != null) ...[
             const SizedBox(height: AppSpace.xs),
             InfoLine(
-                icon: Icons.flag_outlined,
-                text: 'To: ${destination.name}',
-                semanticPrefix: 'Destination'),
+              icon: Icons.flag_outlined,
+              text: 'To: ${destination.name}',
+              semanticPrefix: 'Destination',
+            ),
           ],
           if (presentation.showWhatToBring && event.whatToBring.isNotEmpty) ...[
             const SizedBox(height: AppSpace.xs),
             InfoLine(
-                icon: Icons.backpack_outlined,
-                text: 'Bring: ${event.whatToBring.join(', ')}',
-                semanticPrefix: 'What to bring'),
+              icon: Icons.backpack_outlined,
+              text: 'Bring: ${event.whatToBring.join(', ')}',
+              semanticPrefix: 'What to Bring',
+            ),
           ],
           if (entry.isNow) ...[
             const SizedBox(height: AppSpace.lg),

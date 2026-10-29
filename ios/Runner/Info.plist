@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSCameraUsageDescription</key>
+	<string>OnTime uses the camera to take a photo for an activity.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>OnTime uses your photos to choose a picture for an activity.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Staff can dictate activities for the AI schedule suggestions.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
@@ -19,7 +23,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>bbw_visual_routine</string>
+	<string>OnTime</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

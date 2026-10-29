@@ -21,7 +21,7 @@ class ProfilePreferencesEditor extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _Choice<InformationDensity>(
-          label: 'Information density',
+          label: 'Information Density',
           value: profile.informationDensity,
           options: const {
             InformationDensity.minimal: 'Minimal',
@@ -41,7 +41,7 @@ class ProfilePreferencesEditor extends StatelessWidget {
           onChanged: (v) => onChanged(profile.copyWith(visualPreference: v)),
         ),
         _Choice<TransitionWarning>(
-          label: 'Transition warnings',
+          label: 'Transition Warnings',
           value: profile.transitionWarning,
           options: const {
             TransitionWarning.none: 'None',
@@ -51,17 +51,17 @@ class ProfilePreferencesEditor extends StatelessWidget {
           onChanged: (v) => onChanged(profile.copyWith(transitionWarning: v)),
         ),
         _Choice<TimeDisplay>(
-          label: 'Time display',
+          label: 'Time Display',
           value: profile.timeDisplay,
           options: const {
-            TimeDisplay.progress: 'Progress bar',
+            TimeDisplay.progress: 'Progress Bar',
             TimeDisplay.clock: 'Text',
             TimeDisplay.both: 'Both',
           },
           onChanged: (v) => onChanged(profile.copyWith(timeDisplay: v)),
         ),
         _Choice<TextSizePreference>(
-          label: 'Text size',
+          label: 'Text Size',
           value: profile.textSize,
           options: const {
             TextSizePreference.standard: 'Standard',
@@ -71,28 +71,33 @@ class ProfilePreferencesEditor extends StatelessWidget {
         ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('High contrast'),
+          title: const Text('High Contrast'),
           value: profile.highContrast,
           onChanged: (v) => onChanged(profile.copyWith(highContrast: v)),
         ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('Reduced motion'),
+          title: const Text('Reduced Motion'),
           value: profile.motion == MotionPreference.reduced,
-          onChanged: (v) => onChanged(profile.copyWith(
-              motion: v ? MotionPreference.reduced : MotionPreference.standard)),
+          onChanged: (v) => onChanged(
+            profile.copyWith(
+              motion: v ? MotionPreference.reduced : MotionPreference.standard,
+            ),
+          ),
         ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('Sound for reminders'),
+          title: const Text('Sound for Reminders'),
           subtitle: const Text('Stored preference (not played in prototype)'),
           value: profile.soundEnabled,
           onChanged: (v) => onChanged(profile.copyWith(soundEnabled: v)),
         ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('Vibration for reminders'),
-          subtitle: const Text('Stored preference (not triggered in prototype)'),
+          title: const Text('Vibration for Reminders'),
+          subtitle: const Text(
+            'Stored preference (not triggered in prototype)',
+          ),
           value: profile.vibrationEnabled,
           onChanged: (v) => onChanged(profile.copyWith(vibrationEnabled: v)),
         ),

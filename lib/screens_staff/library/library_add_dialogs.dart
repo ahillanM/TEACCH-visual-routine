@@ -74,7 +74,7 @@ class _AddDialogState extends State<_AddDialog> {
   Widget build(BuildContext context) {
     final library = AppScope.of(context).library;
     return AlertDialog(
-      title: const Text('Add to library'),
+      title: const Text('Add to Library'),
       content: SizedBox(
         width: 480,
         child: SingleChildScrollView(
@@ -102,7 +102,7 @@ class _AddDialogState extends State<_AddDialog> {
                 decoration: InputDecoration(
                   labelText: _type == _ItemType.person
                       ? 'Role (e.g. Trainer)'
-                      : 'Short participant-facing description',
+                      : 'Short Participant-Facing Description',
                 ),
               ),
               if (_type == _ItemType.activity) ...[
@@ -113,14 +113,14 @@ class _AddDialogState extends State<_AddDialog> {
                   items: [
                     for (final c in ActivityCategory.values)
                       DropdownMenuItem(
-                          value: c, child: Text(CategoryStyle.of(c).label)),
+                          value: c, child: Text(CategoryStyle.of(c, context.palette).label)),
                   ],
                   onChanged: (c) => setState(() => _category = c ?? _category),
                 ),
                 const SizedBox(height: AppSpace.md),
                 DropdownButtonFormField<String?>(
                   initialValue: _placeId,
-                  decoration: const InputDecoration(labelText: 'Default place'),
+                  decoration: const InputDecoration(labelText: 'Default Place'),
                   items: [
                     const DropdownMenuItem(value: null, child: Text('None')),
                     for (final p in library.places)

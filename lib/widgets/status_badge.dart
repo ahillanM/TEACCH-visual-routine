@@ -23,7 +23,7 @@ class StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = filled ? Colors.white : color;
+    final fg = filled ? context.palette.onColor(color) : color;
     return Container(
       padding: const EdgeInsets.symmetric(
           horizontal: AppSpace.sm + AppSpace.xxs, vertical: AppSpace.xs),

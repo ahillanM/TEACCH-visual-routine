@@ -1,4 +1,5 @@
 import 'activity_category.dart';
+import 'task_color.dart';
 import 'visual_ref.dart';
 
 /// What kind of time block an event is. Free time is not an event kind:
@@ -38,6 +39,16 @@ class ScheduledEvent {
   /// Set when this event was created to replace a cancelled one.
   final String? replacesEventId;
 
+  /// Created by the participant in their free time ("My plan"), not by
+  /// staff. Stored separately on the server and never part of staff
+  /// schedule writes.
+  final bool isPersonal;
+  /// Colour chosen by staff so participants recognise the task. Optional.
+  final TaskColor? color;
+
+  /// Set when a participant added this to their own free time.
+  final String? createdByParticipantId;
+
   const ScheduledEvent({
     required this.id,
     required this.title,
@@ -56,10 +67,14 @@ class ScheduledEvent {
     this.planBActivityId,
     this.reminderMinutesBefore,
     this.replacesEventId,
+    this.isPersonal = false,
+    this.color,
+    this.createdByParticipantId,
   });
 
   bool get isCancelled => status == EventStatus.cancelled;
   bool get isActive => status == EventStatus.active;
+  bool get isParticipantOwned => createdByParticipantId != null || isPersonal;
   Duration get duration => end.difference(start);
 
   bool isAssignedTo(String participantId) =>
@@ -69,7 +84,9 @@ class ScheduledEvent {
       start.isBefore(other.end) && other.start.isBefore(end);
 
   bool occursOn(DateTime day) =>
-      start.year == day.year && start.month == day.month && start.day == day.day;
+      start.year == day.year &&
+      start.month == day.month &&
+      start.day == day.day;
 
   ScheduledEvent copyWith({
     String? id,
@@ -89,8 +106,11 @@ class ScheduledEvent {
     String? planBActivityId,
     int? reminderMinutesBefore,
     String? replacesEventId,
+    bool? isPersonal,
+    TaskColor? color,
     bool clearPlace = false,
     bool clearContact = false,
+    bool clearColor = false,
   }) {
     return ScheduledEvent(
       id: id ?? this.id,
@@ -112,6 +132,9 @@ class ScheduledEvent {
       reminderMinutesBefore:
           reminderMinutesBefore ?? this.reminderMinutesBefore,
       replacesEventId: replacesEventId ?? this.replacesEventId,
+      isPersonal: isPersonal ?? this.isPersonal,
+      color: clearColor ? null : (color ?? this.color),
+      createdByParticipantId: createdByParticipantId,
     );
   }
 }
