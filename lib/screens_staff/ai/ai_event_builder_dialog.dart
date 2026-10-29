@@ -6,6 +6,7 @@ import '../../core/models/activity_category.dart';
 import '../../core/models/scheduled_event.dart';
 import '../../core/models/visual_ref.dart';
 import '../../core/time/time_format.dart';
+import '../../services/speech_input.dart';
 import '../../theme.dart';
 import '../common/staff_widgets.dart';
 
@@ -33,18 +34,71 @@ class _AiBuilder extends StatefulWidget {
 }
 
 class _AiBuilderState extends State<_AiBuilder> {
-  final _text = TextEditingController(
-    text: 'Tomorrow woodworking at 9, lunch at 12 and physiotherapy at 2',
-  );
+  static const _exampleText =
+      'Tomorrow woodworking at 9, lunch at 12 and physiotherapy at 2';
+  final _text = TextEditingController(text: _exampleText);
   /// Proposals keyed by a stable id so rows keep their state when edited.
   List<(int, EventProposal)>? _proposals;
   Set<String> _participants = {};
   bool _loading = false;
 
+  // Voice input: fills [_text]; generation stays the same as for typing.
+  late final SpeechInput _speech = AppScope.of(context).speech;
+  bool _voiceStarting = false;
+  bool _listening = false;
+  late SpeechLanguage _language = SpeechLanguage.forLocale(
+      WidgetsBinding.instance.platformDispatcher.locale);
+  String _textBeforeVoice = '';
+
   @override
   void dispose() {
+    if (_listening) _speech.cancel();
     _text.dispose();
     super.dispose();
+  }
+
+  Future<void> _toggleVoice() async {
+    if (_listening) {
+      await _speech.stop(); // final text arrives, then onDone
+      return;
+    }
+    if (_voiceStarting || _loading || _speech.isListening) return;
+    setState(() => _voiceStarting = true);
+    final problem = await _speech.initialize();
+    if (!mounted) return;
+    if (problem != null) {
+      setState(() => _voiceStarting = false);
+      showStaffMessage(
+          context,
+          problem == SpeechUnavailable.permissionDenied
+              ? 'Microphone access was denied. Allow it in the phone settings to dictate, or type instead.'
+              : 'Voice input is not available on this device. Please type instead.');
+      return;
+    }
+    final current = _text.text.trim();
+    _textBeforeVoice = current == _exampleText ? '' : current;
+    setState(() {
+      _voiceStarting = false;
+      _listening = true;
+    });
+    await _speech.start(
+      _language,
+      SpeechCallbacks(
+        onResult: (words, _) {
+          if (!mounted) return;
+          _text.text = [_textBeforeVoice, words.trim()]
+              .where((s) => s.isNotEmpty)
+              .join(' ');
+          _text.selection = TextSelection.collapsed(offset: _text.text.length);
+        },
+        onError: (message) {
+          if (mounted) showStaffMessage(context, message);
+        },
+        onDone: () {
+          if (mounted) setState(() => _listening = false);
+        },
+      ),
+    );
   }
 
   Future<void> _suggest() async {
@@ -133,20 +187,76 @@ class _AiBuilderState extends State<_AiBuilder> {
             style: TextStyle(color: palette.textSecondary),
           ),
           const SizedBox(height: AppSpace.lg),
-          TextField(
-            controller: _text,
-            maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: 'Describe the activities',
-              hintText: 'e.g. Tomorrow woodworking at 9, lunch at 12 …',
-              alignLabelWithHint: true,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _text,
+                  maxLines: 3,
+                  readOnly: _listening,
+                  decoration: const InputDecoration(
+                    labelText: 'Describe the activities',
+                    hintText: 'e.g. Tomorrow woodworking at 9, lunch at 12 …',
+                    alignLabelWithHint: true,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpace.sm),
+              Column(
+                children: [
+                  IconButton.filledTonal(
+                    key: const Key('voice-input'),
+                    tooltip: _listening ? 'Stop dictation' : 'Dictate',
+                    iconSize: 28,
+                    onPressed: _voiceStarting || _loading ? null : _toggleVoice,
+                    isSelected: _listening,
+                    icon: const Icon(Icons.mic_none_rounded),
+                    selectedIcon: const Icon(Icons.stop_rounded),
+                  ),
+                  const SizedBox(height: AppSpace.xs),
+                  _LanguageToggle(
+                    value: _language,
+                    onChanged: _listening
+                        ? null
+                        : (l) => setState(() => _language = l),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          if (_listening) ...[
+            const SizedBox(height: AppSpace.sm),
+            Semantics(
+              liveRegion: true,
+              child: Row(
+                children: [
+                  Icon(Icons.graphic_eq_rounded, color: palette.brand),
+                  const SizedBox(width: AppSpace.sm),
+                  Expanded(
+                    child: Text(
+                      'Listening (${_language.label}) … tap ■ to stop',
+                      style: TextStyle(
+                          color: palette.brand, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(height: AppSpace.xs),
+            const LinearProgressIndicator(),
+          ],
+          const SizedBox(height: AppSpace.xs),
+          Text(
+            'Voice is turned into text by this device\'s speech service; '
+            'no audio is sent to our servers. Check the text before suggesting.',
+            style: TextStyle(color: palette.textSecondary, fontSize: 12),
           ),
           const SizedBox(height: AppSpace.md),
           Align(
             alignment: Alignment.centerRight,
             child: FilledButton.tonalIcon(
-              onPressed: _loading ? null : _suggest,
+              onPressed: _loading || _listening || _voiceStarting ? null : _suggest,
               icon: _loading
                   ? const SizedBox(
                       width: 16,
@@ -194,6 +304,36 @@ class _AiBuilderState extends State<_AiBuilder> {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// DE / EN choice for dictation.
+class _LanguageToggle extends StatelessWidget {
+  final SpeechLanguage value;
+  final ValueChanged<SpeechLanguage>? onChanged;
+
+  const _LanguageToggle({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return SegmentedButton<SpeechLanguage>(
+      showSelectedIcon: false,
+      style: const ButtonStyle(
+        visualDensity: VisualDensity.compact,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      segments: [
+        for (final l in SpeechLanguage.values)
+          ButtonSegment(
+            value: l,
+            label: Text(l.label),
+            tooltip: l == SpeechLanguage.german ? 'German' : 'English',
+          ),
+      ],
+      selected: {value},
+      onSelectionChanged:
+          onChanged == null ? null : (s) => onChanged!(s.first),
     );
   }
 }
